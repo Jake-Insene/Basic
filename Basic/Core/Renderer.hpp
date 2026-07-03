@@ -60,7 +60,7 @@ struct Renderer
     void init(const RendererCreateInfo& info);
     void destroy();
 
-    FrameInfo begin_frame(Graphics::SwapChain* swap_chain);
+    FrameInfo begin_frame();
     void end_frame(const FrameInfo& frame_info, const Slice<const GPU::PipelineStages>& wait_stages,
         GPU::CommandBufferID command_buffer);
 

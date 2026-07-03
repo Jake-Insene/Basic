@@ -53,7 +53,7 @@ void Renderer::destroy()
     data.command_pool.destroy();
 }
 
-FrameInfo Renderer::begin_frame(Graphics::SwapChain* swap_chain)
+FrameInfo Renderer::begin_frame()
 {
     RenderFrame& frame = data.frames[data.frame_index];
 
@@ -69,7 +69,7 @@ FrameInfo Renderer::begin_frame(Graphics::SwapChain* swap_chain)
     };
 
     u32 image_index = MaxValue<u32>;
-    bool image_acquired = swap_chain->acquire_image(
+    bool image_acquired = data.swap_chain->acquire_image(
         &image_index,
         frame.present_complete_semaphore
     );
@@ -96,8 +96,8 @@ FrameInfo Renderer::begin_frame(Graphics::SwapChain* swap_chain)
     else if(image_acquired && image_index != MaxValue<u32>)
     {
         frame_flags |= FrameFlags::Acquired;
-        image = swap_chain->get_image(image_index).image;    
-        image_view = swap_chain->get_image(image_index).image_view;    
+        image = data.swap_chain->get_image(image_index).image;    
+        image_view = data.swap_chain->get_image(image_index).image_view;    
     }
 
     return FrameInfo

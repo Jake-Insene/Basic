@@ -8,8 +8,8 @@ bread_package(
     INCLUDES
         "Basic"
     SOURCES
+        "Basic/2D/SpriteBatch.cpp"
+
         "Basic/Core/Renderer.cpp"
         "Basic/Core/Viewport.cpp"
-        
-        "Basic/2D/SpriteStreamer.cpp"
 )

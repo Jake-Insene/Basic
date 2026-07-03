@@ -9,7 +9,7 @@ struct SpriteBatch
 {
     struct InternalData
     {
-
+        
     };
     
     static SpriteBatch create();
