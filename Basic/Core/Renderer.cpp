@@ -79,7 +79,7 @@ FrameInfo Renderer::begin_frame()
         frame.in_flight_fence = GPU::FenceID::invalid();
     }
 
-    FrameFlags frame_flags = FrameFlags(0);
+    FrameFlags frame_flags = FrameFlags();
     GPU::TextureID image = GPU::TextureID::invalid();
     GPU::TextureViewID image_view = GPU::TextureViewID::invalid();
     if(image_index == MaxValue<u32> && image_acquired)
