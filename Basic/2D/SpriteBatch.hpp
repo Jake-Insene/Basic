@@ -11,9 +11,7 @@ struct SpriteBatch
         
     };
     
-    static SpriteBatch create();
-
-    void destroy();
+    SpriteBatch();
 };
 
 }

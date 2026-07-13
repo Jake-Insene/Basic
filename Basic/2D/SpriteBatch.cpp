@@ -4,4 +4,9 @@
 namespace Basic
 {
 
+SpriteBatch::SpriteBatch()
+{
+    
+}
+
 }

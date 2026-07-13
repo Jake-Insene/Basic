@@ -1,7 +1,5 @@
 #pragma once
-#include "gpu/gpu.h"
-
-#include "Core/RendererCore.hpp"
+#include "Core/RenderTarget.hpp"
 
 
 namespace Basic
@@ -9,18 +7,21 @@ namespace Basic
 
 struct Viewport
 {
+    DisableCopy(Viewport);
+    DisableMove(Viewport);
 
     struct InternalData
     {
-        GPU::TextureID viewport_textures[RendererCore::MaxFramesInFlight];
-        GPU::TextureViewID viewport_texture_views[RendererCore::MaxFramesInFlight];
+        RenderTarget render_target;
 
-        GPU::TextureFormat viewport_format;
+        Vector2I viewport_size;
     } data;
 
-    static Viewport create(GPU::TextureFormat viewport_format, const Vector2I& viewport_size);
+    Viewport(GPU::TextureFormat viewport_format, const Vector2I& viewport_size);
+    ~Viewport();
 
-    void destroy();
+    RenderTarget& get_render_target() { return data.render_target; }
+    Vector2I get_size() const { return data.viewport_size; }
 };
 
 }

@@ -4,18 +4,16 @@
 namespace Basic
 {
 
-void Renderer::init(const RendererCreateInfo& info)
+Renderer::Renderer(const RendererCreateInfo& info)
 {
     data.allocator = info.allocator;
-    data.device = info.device;
-    data.graphics_queue = info.graphics_queue;
-    data.gpu_memory_allocator = info.gpu_memory_allocator;
+    data.render_device = info.render_device;
     data.swap_chain = info.swap_chain;
 
     data.command_pool.init(
         {
             .allocator = data.allocator,
-            .device = data.device,
+            .device = data.render_device->get_device(),
             .queue_usage = GPU::QueueUsage::Graphics
         }
     );
@@ -25,7 +23,7 @@ void Renderer::init(const RendererCreateInfo& info)
     ConstructObject(data.frames);
     for(RenderFrame& frame : data.frames)
     {
-        frame.present_complete_semaphore = GPU::semaphore_create(data.device, {}),
+        frame.present_complete_semaphore = GPU::semaphore_create(data.render_device->get_device(), {}),
         frame.in_flight_fence = GPU::FenceID::invalid();
     }
 
@@ -33,11 +31,11 @@ void Renderer::init(const RendererCreateInfo& info)
     data.render_finished_semaphores.resize(data.swap_chain->get_image_count());
     (void)data.render_finished_semaphores.iter().transform([&](GPU::SemaphoreID)
     {
-        return GPU::semaphore_create(data.device, {});
+        return GPU::semaphore_create(data.render_device->get_device(), {});
     });
 }
 
-void Renderer::destroy()
+Renderer::~Renderer()
 {
     (void)data.render_finished_semaphores.iter().for_each([](GPU::SemaphoreID sem)
     {
@@ -85,7 +83,7 @@ FrameInfo Renderer::begin_frame()
     if(image_index == MaxValue<u32> && image_acquired)
     {
         frame.in_flight_fence = data.command_pool.execute_empty(
-            data.graphics_queue,
+            data.render_device->get_graphics_queue(),
             {
                 .wait_semaphores = Slice(&frame.present_complete_semaphore, 1),
                 .wait_stages = wait_stages,
@@ -110,14 +108,22 @@ FrameInfo Renderer::begin_frame()
     };
 }
 
-void Renderer::end_frame(const FrameInfo& frame_info, const Slice<const GPU::PipelineStages>& wait_stages,
+void Renderer::end_frame(const FrameInfo&)
+{
+    data.frame_index = (data.frame_index + 1) % MaxFramesInFlight;
+}
+
+GPU::CommandBufferID Renderer::acquire_command_buffer(const FrameInfo&)
+{
+    return data.command_pool.acquire_command_buffer();
+}
+
+void Renderer::submit_command_buffer(const FrameInfo& frame_info, const Slice<const GPU::PipelineStages>& wait_stages,
     GPU::CommandBufferID command_buffer)
 {
-    data.frame_index = (data.frame_index + 1) % RendererCore::MaxFramesInFlight;
-
     RenderFrame& frame = data.frames[frame_info.frame_index];
     frame.in_flight_fence = data.command_pool.execute(
-        data.graphics_queue,
+        data.render_device->get_graphics_queue(),
         {
             .wait_semaphores = Slice(&frame.present_complete_semaphore, 1),
             .wait_stages = wait_stages,
@@ -125,11 +131,6 @@ void Renderer::end_frame(const FrameInfo& frame_info, const Slice<const GPU::Pip
             .signal_semaphores = Slice(&data.render_finished_semaphores.get(frame_info.image_index), 1),
         }
     );
-}
-
-GPU::CommandBufferID Renderer::acquire_command_buffer(const FrameInfo&)
-{
-    return data.command_pool.acquire_command_buffer();
 }
 
 void Renderer::present(const FrameInfo& frame_info)
