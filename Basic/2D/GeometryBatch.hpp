@@ -30,6 +30,7 @@ struct GeometryBatch
     {
         GPU::PipelineID pipeline;
         GPU::PipelineLayoutID pipeline_layout;
+        BatchBlock block;
 
         usize vb_offset;
         u32 vertex_count;
@@ -48,12 +49,15 @@ struct GeometryBatch
         Array<Primitive> primitives;
         Array<Batch> batches;
         GPU::PrimitiveTopology current_topology;
+
+        BatchBlock block;
     } data;
 
     GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format);
     ~GeometryBatch();
 
-    void reset();
+    void begin(Mat4 projection);
+    void end();
 
     void draw_line(const Vector2& begin, const Vector2& end, const Color& color);
     void draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color);

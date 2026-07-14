@@ -101,11 +101,21 @@ GeometryBatch::~GeometryBatch()
     data.batches.destroy();
 }
 
-void GeometryBatch::reset()
+void GeometryBatch::begin(Mat4 projection)
 {
     data.primitives.clear();
     data.batches.clear();
     data.current_topology = GPU::PrimitiveTopology::Unknown;
+
+    data.block =
+    {
+        .projection = projection,
+    };
+}
+
+void GeometryBatch::end()
+{
+
 }
 
 void GeometryBatch::draw_line(const Vector2& begin, const Vector2& end, const Color& color)
@@ -157,6 +167,7 @@ void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
     {
         .pipeline = pipeline,
         .pipeline_layout = pipeline_layout,
+        .block = data.block,
         .vb_offset = data.primitives.count,
         .vertex_count = 0,
     };
