@@ -1,10 +1,10 @@
 #pragma once
-#include "collections/array.h"
-#include "math/color.h"
-#include "math/vec2.h"
-#include "math/mat4.h"
+#include <collections/array.h>
+#include <math/color.h>
+#include <math/vec2.h>
+#include <math/mat4.h>
 
-#include "Core/RenderCore.hpp"
+#include "Basic/Core/RenderCore.hpp"
 
 
 namespace Basic
@@ -26,9 +26,13 @@ struct GeometryBatch
         Mat4 projection;
     };
 
-    struct BatchBlockInfo
+    struct Batch
     {
-        Vector2 viewport_size;
+        GPU::PipelineID pipeline;
+        GPU::PipelineLayoutID pipeline_layout;
+
+        usize vb_offset;
+        u32 vertex_count;
     };
 
     struct InternalData
@@ -41,19 +45,22 @@ struct GeometryBatch
         GPU::PipelineLayoutID triangle_pipeline_layout;
         GPU::PipelineID triangle_pipeline;
 
+        Array<Primitive> primitives;
         Array<Batch> batches;
-        usize current_batch;
+        GPU::PrimitiveTopology current_topology;
     } data;
 
     GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format);
     ~GeometryBatch();
 
-    void begin(const BatchBlockInfo& info);
-    void end();
+    void reset();
 
     void draw_line(const Vector2& begin, const Vector2& end, const Color& color);
+    void draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color);
 
     Slice<Batch> build_batches();
+
+    void _set_topology(GPU::PrimitiveTopology new_topology);
 };
 
 }

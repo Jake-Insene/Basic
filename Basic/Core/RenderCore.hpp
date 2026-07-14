@@ -23,23 +23,6 @@ struct FrameInfo
     GPU::TextureViewID image_view;
 };
 
-struct Batch
-{
-    GPU::PipelineID pipeline;
-    GPU::PipelineLayoutID pipeline_layout;
-
-    MemoryAddress block;
-
-    GPU::BufferID vb;
-    GPU::BufferID ib;
-    usize offset;
-
-    GPU::DescriptorSetID set;
-
-    u32 vertices_count;
-    u32 instance_count;
-};
-
 struct TransientAllocation
 {
     // Size of allocated space.
@@ -57,6 +40,8 @@ struct FrameContext
 
     struct InternalData
     {
+        Graphics::RenderDevice* render_device;
+
         GPU::BufferID transient_vertex_buffer;
         GPUMemoryAllocationID transient_vertex_buffer_allocation;
         Slice<u8> transient_mapped;

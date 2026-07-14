@@ -1,7 +1,7 @@
 #pragma once
-#include "gpu/gpu.h"
+#include <gpu/gpu.h>
 
-#include "Core/RenderCore.hpp"
+#include "Basic/Core/RenderCore.hpp"
 
 
 namespace Basic

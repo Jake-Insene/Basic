@@ -1,8 +1,7 @@
-#include "2D/GeometryBatch.hpp"
+#include "Basic/2D/GeometryBatch.hpp"
 
-#include "engine/engine.h"
-#include "graphics/shader.h"
-#include "math/projection.h"
+#include <engine/engine.h>
+#include <graphics/shader.h>
 
 
 namespace Basic
@@ -86,7 +85,9 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
 
     primitive_shader.destroy();
 
+    data.primitives = Array<Primitive>::with_size(allocator, 4);
     data.batches = Array<Batch>::with_size(allocator, 4);
+    data.current_topology = GPU::PrimitiveTopology::Unknown;
 }
 
 GeometryBatch::~GeometryBatch()
@@ -96,21 +97,60 @@ GeometryBatch::~GeometryBatch()
     GPU::pipeline_layout_destroy(data.triangle_pipeline_layout);
     GPU::pipeline_destroy(data.triangle_pipeline);
 
+    data.primitives.destroy();
     data.batches.destroy();
 }
 
-void GeometryBatch::begin(const BatchBlockInfo& info)
+void GeometryBatch::reset()
 {
-    Unused(info);
-}
-
-void GeometryBatch::end()
-{
+    data.primitives.clear();
+    data.batches.clear();
+    data.current_topology = GPU::PrimitiveTopology::Unknown;
 }
 
 void GeometryBatch::draw_line(const Vector2& begin, const Vector2& end, const Color& color)
 {
-    Unused(begin, end, color);
+    if(data.current_topology != GPU::PrimitiveTopology::LineList || data.batches.is_empty())
+    {
+        _set_topology(GPU::PrimitiveTopology::LineList);
+    }
+
+    (void)data.primitives.add(Primitive{.position = begin, .color = color});
+    (void)data.primitives.add(Primitive{.position = end, .color = color});
+    data.batches.last().vertex_count += 2;
+}
+
+void GeometryBatch::draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color)
+{
+    if(data.current_topology != GPU::PrimitiveTopology::TriangleList || data.batches.is_empty())
+    {
+        _set_topology(GPU::PrimitiveTopology::TriangleList);
+    }
+
+    (void)data.primitives.add(Primitive{.position = v1, .color = color});
+    (void)data.primitives.add(Primitive{.position = v2, .color = color});
+    (void)data.primitives.add(Primitive{.position = v3, .color = color});
+    data.batches.last().vertex_count += 3;
+}
+
+Slice<GeometryBatch::Batch> GeometryBatch::build_batches()
+{
+    return data.batches.slice();
+}
+
+void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
+{
+    data.current_topology = new_topology;
+
+    Batch new_batch =
+    {
+        .pipeline = data.line_pipeline,
+        .pipeline_layout = data.line_pipeline_layout,
+        .vb_offset = data.primitives.count,
+        .vertex_count = 0,
+    };
+
+    (void)data.batches.add(new_batch);
 }
 
 }

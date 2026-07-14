@@ -1,10 +1,10 @@
 #pragma once
-#include "gpu/gpu.h"
-#include "graphics/command_pool.h"
-#include "graphics/swap_chain.h"
-#include "graphics/render_device.h"
+#include <gpu/gpu.h>
+#include <graphics/command_pool.h>
+#include <graphics/swap_chain.h>
+#include <graphics/render_device.h>
 
-#include "Core/RenderCore.hpp"
+#include "Basic/Core/RenderCore.hpp"
 
 
 struct GPUMemoryAllocator;
