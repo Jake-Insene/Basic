@@ -57,7 +57,12 @@ struct FrameContext
 
     void reset();
 
+    void syncronize_memory(GPU::CommandBufferID command_buffer);
+
     TransientAllocation allocate_transient_vertex(usize size);
+
+    GPU::BufferID get_transient_vertex_buffer();
+    GPU::BufferID get_transient_vertex_buffer_local();
 };
 
 }

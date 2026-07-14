@@ -55,6 +55,23 @@ void FrameContext::reset()
     data.current_offset = 0;
 }
 
+void FrameContext::syncronize_memory(GPU::CommandBufferID command_buffer)
+{
+    if(data.current_offset == 0)
+    {
+        return;
+    }
+
+    const GPU::BufferCopyRegion copy_regions[] =
+    {
+        GPU::BufferCopyRegion::create(0, 0, data.current_offset),
+    };
+
+    GPU::command_buffer_copy_buffer(command_buffer,
+        GPU::CopyBufferInfo::create(data.transient_vertex_buffer,
+            data.transient_vertex_buffer_local, copy_regions));
+}
+
 TransientAllocation FrameContext::allocate_transient_vertex(usize size)
 {
     TransientAllocation allocation =
@@ -66,6 +83,16 @@ TransientAllocation FrameContext::allocate_transient_vertex(usize size)
 
     data.current_offset += size;
     return allocation;
+}
+
+GPU::BufferID FrameContext::get_transient_vertex_buffer()
+{
+    return data.transient_vertex_buffer;
+}
+
+GPU::BufferID FrameContext::get_transient_vertex_buffer_local()
+{
+    return data.transient_vertex_buffer_local;
 }
 
 }

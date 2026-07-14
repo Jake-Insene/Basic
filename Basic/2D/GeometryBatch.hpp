@@ -58,7 +58,8 @@ struct GeometryBatch
     void draw_line(const Vector2& begin, const Vector2& end, const Color& color);
     void draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color);
 
-    Slice<Batch> build_batches();
+    Slice<Batch> get_batches();
+    Slice<Primitive> get_primitives();
 
     void _set_topology(GPU::PrimitiveTopology new_topology);
 };

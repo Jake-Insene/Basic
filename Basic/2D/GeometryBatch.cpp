@@ -133,19 +133,30 @@ void GeometryBatch::draw_triangle(const Vector2& v1, const Vector2& v2, const Ve
     data.batches.last().vertex_count += 3;
 }
 
-Slice<GeometryBatch::Batch> GeometryBatch::build_batches()
+Slice<GeometryBatch::Batch> GeometryBatch::get_batches()
 {
     return data.batches.slice();
+}
+
+Slice<GeometryBatch::Primitive> GeometryBatch::get_primitives()
+{
+    return data.primitives.slice();
 }
 
 void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
 {
     data.current_topology = new_topology;
 
+    GPU::PipelineID pipeline = new_topology == GPU::PrimitiveTopology::LineList ?
+        data.line_pipeline : data.triangle_pipeline;
+
+    GPU::PipelineLayoutID pipeline_layout = new_topology == GPU::PrimitiveTopology::LineList ?
+        data.line_pipeline_layout : data.triangle_pipeline_layout;
+
     Batch new_batch =
     {
-        .pipeline = data.line_pipeline,
-        .pipeline_layout = data.line_pipeline_layout,
+        .pipeline = pipeline,
+        .pipeline_layout = pipeline_layout,
         .vb_offset = data.primitives.count,
         .vertex_count = 0,
     };

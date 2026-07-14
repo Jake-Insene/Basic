@@ -34,20 +34,7 @@ void RenderGraph::clear()
 void RenderGraph::begin_frame(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info)
 {
     FrameContext& context =  get_frame_context(frame_info);
-
-    if(context.data.current_offset == 0)
-    {
-        return;
-    }
-
-    const GPU::BufferCopyRegion copy_regions[] =
-    {
-        GPU::BufferCopyRegion::create(0, 0, context.data.current_offset),
-    };
-
-    GPU::command_buffer_copy_buffer(command_buffer,
-        GPU::CopyBufferInfo::create(context.data.transient_vertex_buffer,
-            context.data.transient_vertex_buffer_local, copy_regions));
+    context.syncronize_memory(command_buffer);
 }
 
 void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info)
@@ -55,7 +42,7 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     PassResources resources =
     {
         .command_buffer = command_buffer,
-        .global_device_vertex_buffer = get_frame_context(frame_info).data.transient_vertex_buffer_local,
+        .global_device_vertex_buffer = get_frame_context(frame_info).get_transient_vertex_buffer_local(),
     };
 
     for(Pass& pass : data.passes.iter())
