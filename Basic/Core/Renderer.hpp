@@ -14,11 +14,17 @@ namespace Basic
 
 struct RendererCreateInfo
 {
+    // Renderer allocator.
     Mem::Allocator* allocator;
+    // The Render Device to use.
     Graphics::RenderDevice* render_device;
+    // The Swap Chain containing the image to render to.
     Graphics::SwapChain* swap_chain;
 };
 
+/**
+* Basic renderer. Can begin and end a frame, acquire and present images.
+*/
 struct Renderer
 {
     DisableCopy(Renderer);
@@ -46,11 +52,23 @@ struct Renderer
     Renderer(const RendererCreateInfo& info);
     ~Renderer();
 
+    /**
+    * It try to acquire a new frame and begin rendering.
+    */
     FrameInfo begin_frame();
-    void end_frame(const FrameInfo& frame_info);
 
+    /**
+    * Ends the current frame
+    */
+    void end_frame();
+
+    // TODO: This interface doesn't allow multiple command buffers.
     GPU::CommandBufferID acquire_command_buffer(const FrameInfo& frame_info);
     void submit_command_buffer(const FrameInfo& frame_info, const Slice<const GPU::PipelineStages>& wait_stages, GPU::CommandBufferID command_buffer);
+    
+    /**
+    * Sends the current frame to the presentation engine.
+    */
     void present(const FrameInfo& frame_info);
 };
 

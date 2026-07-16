@@ -10,6 +10,10 @@
 namespace Basic
 {
 
+/*
+* Batches primitives per type.
+* Currently supports: Line, Triangles.
+*/
 struct GeometryBatch
 {
     DisableCopy(GeometryBatch);
@@ -36,6 +40,14 @@ struct GeometryBatch
         u32 vertex_count;
     };
 
+    enum class RecordingState
+    {
+        // The batcher has begin recording.
+        Begin,
+        // The batcher has end recording. [Default]
+        End,
+    };
+
     struct InternalData
     {
         Mem::Allocator* allocator;
@@ -51,8 +63,13 @@ struct GeometryBatch
         GPU::PrimitiveTopology current_topology;
 
         BatchBlock block;
+        RecordingState state;
     } data;
 
+    /**
+    * @param allocator Batcher allocator.
+    * @param render_attachment_format Use to create the pipelines. This usually doesn't change often.
+    */
     GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format);
     ~GeometryBatch();
 

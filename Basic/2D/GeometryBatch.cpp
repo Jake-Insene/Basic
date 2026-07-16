@@ -88,6 +88,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
     data.primitives = Array<Primitive>::with_size(allocator, 4);
     data.batches = Array<Batch>::with_size(allocator, 4);
     data.current_topology = GPU::PrimitiveTopology::Unknown;
+    data.state = RecordingState::End;
 }
 
 GeometryBatch::~GeometryBatch()
@@ -103,9 +104,12 @@ GeometryBatch::~GeometryBatch()
 
 void GeometryBatch::begin(Mat4 projection)
 {
+    DebugAssert(data.state == RecordingState::End, "batcher is still open");
+
     data.primitives.clear();
     data.batches.clear();
     data.current_topology = GPU::PrimitiveTopology::Unknown;
+    data.state = RecordingState::Begin;
 
     data.block =
     {
@@ -115,11 +119,13 @@ void GeometryBatch::begin(Mat4 projection)
 
 void GeometryBatch::end()
 {
-
+    DebugAssert(data.state == RecordingState::Begin, "batcher is already end");
+    data.state = RecordingState::End;
 }
 
 void GeometryBatch::draw_line(const Vector2& begin, const Vector2& end, const Color& color)
 {
+    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
     if(data.current_topology != GPU::PrimitiveTopology::LineList || data.batches.is_empty())
     {
         _set_topology(GPU::PrimitiveTopology::LineList);
@@ -132,6 +138,7 @@ void GeometryBatch::draw_line(const Vector2& begin, const Vector2& end, const Co
 
 void GeometryBatch::draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color)
 {
+    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
     if(data.current_topology != GPU::PrimitiveTopology::TriangleList || data.batches.is_empty())
     {
         _set_topology(GPU::PrimitiveTopology::TriangleList);
@@ -155,6 +162,7 @@ Slice<GeometryBatch::Primitive> GeometryBatch::get_primitives()
 
 void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
 {
+    DebugAssert(new_topology != GPU::PrimitiveTopology::Unknown, "invalid topology");
     data.current_topology = new_topology;
 
     GPU::PipelineID pipeline = new_topology == GPU::PrimitiveTopology::LineList ?

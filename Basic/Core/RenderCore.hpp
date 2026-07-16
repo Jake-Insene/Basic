@@ -6,21 +6,31 @@
 namespace Basic
 {
 
+// This is not likely to change.
 static constexpr u32 MaxFramesInFlight = 3;
+
 static constexpr GPU::TextureFormat DefaultViewportFormat = GPU::TextureFormat::RGBA8Srgb;
 
 enum class FrameFlags : u8
 {
+    // The frame was acquired.
     Acquired = Bit(0),
 };
 
 struct FrameInfo
 {
+    // Frame flags. Useful to know if this frame should render
     FrameFlags flags;
+    // The locagical frame index. [0-2]
     u32 frame_index;
+    // The image index in the swap chain. [0-N]
     u32 image_index;
+    // The current image use by the frame.
     GPU::TextureID image;
+    // View for the current image, uses same format as image.
     GPU::TextureViewID image_view;
+    // Size of the current image.
+    Vector2I image_size;
 };
 
 struct TransientAllocation
@@ -35,8 +45,7 @@ struct TransientAllocation
 
 struct FrameContext
 {
-    // 16 MB
-    static constexpr usize InitialTransientSize = 1024 * 1024 * 16;
+    static constexpr usize InitialTransientSize = MiB(16);
 
     struct InternalData
     {

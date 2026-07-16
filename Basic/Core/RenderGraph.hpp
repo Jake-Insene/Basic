@@ -9,6 +9,9 @@
 namespace Basic
 {
 
+/**
+* Current frame pass resources.
+*/
 struct PassResources
 {
     GPU::CommandBufferID command_buffer;
@@ -58,7 +61,6 @@ struct RenderGraph
 
     void clear();
 
-    void begin_frame(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
     void execute(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
 };
 

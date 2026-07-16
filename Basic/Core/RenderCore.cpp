@@ -12,7 +12,7 @@ FrameContext::FrameContext(Graphics::RenderDevice* render_device)
         GPU::BufferCreateInfo::create(GPU::BufferUsage::VertexBuffer | GPU::BufferUsage::TransferSource, InitialTransientSize));
     
     data.transient_vertex_buffer_allocation = render_device->get_gpu_memory_allocator()->allocate(
-        GPUMemoryAllocator::AllocationTag::Staging,
+        Graphics::GPUMemoryAllocator::AllocationTag::Staging,
         GPU::buffer_get_memory_requirements(data.transient_vertex_buffer));
     
     data.transient_mapped = render_device->get_gpu_memory_allocator()->allocation_map(
@@ -28,7 +28,7 @@ FrameContext::FrameContext(Graphics::RenderDevice* render_device)
         GPU::BufferCreateInfo::create(GPU::BufferUsage::VertexBuffer | GPU::BufferUsage::TransferDestination, InitialTransientSize));
     
     data.transient_vertex_buffer_local_allocation = render_device->get_gpu_memory_allocator()->allocate(
-        GPUMemoryAllocator::AllocationTag::Buffer,
+        Graphics::GPUMemoryAllocator::AllocationTag::Buffer,
         GPU::buffer_get_memory_requirements(data.transient_vertex_buffer_local));
 
     GPU::buffer_bind_memory_heap(data.transient_vertex_buffer_local,

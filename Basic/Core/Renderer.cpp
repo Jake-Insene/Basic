@@ -105,10 +105,11 @@ FrameInfo Renderer::begin_frame()
         .image_index = image_index,
         .image = image,
         .image_view = image_view,
+        .image_size = data.swap_chain->get_image_size(),
     };
 }
 
-void Renderer::end_frame(const FrameInfo&)
+void Renderer::end_frame()
 {
     data.frame_index = (data.frame_index + 1) % MaxFramesInFlight;
 }
