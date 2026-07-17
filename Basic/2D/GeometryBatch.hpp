@@ -3,6 +3,7 @@
 #include <math/color.h>
 #include <math/vec2.h>
 #include <math/mat4.h>
+#include <math/rect_2d.h>
 
 #include "Basic/Core/RenderCore.hpp"
 
@@ -19,7 +20,7 @@ struct GeometryBatch
     DisableCopy(GeometryBatch);
     DisableMove(GeometryBatch);
 
-    struct alignas(16) Primitive
+    struct alignas(16) Vertex
     {
         Vector2 position;
         Color color;
@@ -58,7 +59,7 @@ struct GeometryBatch
         GPU::PipelineLayoutID triangle_pipeline_layout;
         GPU::PipelineID triangle_pipeline;
 
-        Array<Primitive> primitives;
+        Array<Vertex> vertices;
         Array<Batch> batches;
         GPU::PrimitiveTopology current_topology;
 
@@ -76,12 +77,21 @@ struct GeometryBatch
     void begin(Mat4 projection);
     void end();
 
+    void draw_line_vertex(const Vertex& begin, const Vertex& end);
+    void draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const Vertex& v3);
+
     void draw_line(const Vector2& begin, const Vector2& end, const Color& color);
+    
     void draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color);
+    void draw_fill_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color);
+
+    void draw_rectangle(const Rect2D& rect, const Color& color);
+    void draw_fill_rectangle(const Rect2D& rect, const Color& color);
 
     Slice<Batch> get_batches();
-    Slice<Primitive> get_primitives();
+    Slice<Vertex> get_vertices();
 
+    void _try_begin_new_batch(GPU::PrimitiveTopology new_topology);
     void _set_topology(GPU::PrimitiveTopology new_topology);
 };
 

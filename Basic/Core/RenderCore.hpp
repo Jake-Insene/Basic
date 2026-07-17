@@ -45,7 +45,14 @@ struct TransientAllocation
 
 struct FrameContext
 {
+    DisableCopy(FrameContext);
+    DisableMove(FrameContext);
+
     static constexpr usize InitialTransientSize = MiB(16);
+    // For now this shouldn't happen.
+    static constexpr u32 MaxSets = 1024;
+    static constexpr u32 MaxUniformBuffers = 1024;
+    static constexpr u32 MaxCombinedTextureSamplers = 1024;
 
     struct InternalData
     {
@@ -59,6 +66,8 @@ struct FrameContext
         GPUMemoryAllocationID transient_vertex_buffer_local_allocation;
 
         usize current_offset;
+
+        GPU::DescriptorPoolID pool;
     } data;
 
     FrameContext(Graphics::RenderDevice* render_device);
@@ -69,6 +78,7 @@ struct FrameContext
     void syncronize_memory(GPU::CommandBufferID command_buffer);
 
     TransientAllocation allocate_transient_vertex(usize size);
+    GPU::DescriptorSetID allocate_descriptor_set(GPU::DescriptorSetLayoutID set_layout);
 
     GPU::BufferID get_transient_vertex_buffer();
     GPU::BufferID get_transient_vertex_buffer_local();

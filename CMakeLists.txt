@@ -2,7 +2,7 @@
 
 bread_package(
     NAME
-        "Basic.2D"
+        "Basic"
     ASSETS
         "assets"
     INCLUDES

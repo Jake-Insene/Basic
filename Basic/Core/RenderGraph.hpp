@@ -17,6 +17,8 @@ struct PassResources
     GPU::CommandBufferID command_buffer;
 
     GPU::BufferID global_device_vertex_buffer;
+
+    FrameContext& context;
 };
 
 struct RenderGraph

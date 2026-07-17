@@ -39,6 +39,15 @@ FrameContext::FrameContext(Graphics::RenderDevice* render_device)
     );
     
     data.current_offset = 0;
+
+    const GPU::DescriptorPoolSize pool_sizes[] =
+    {
+        GPU::DescriptorPoolSize::uniform_buffer(MaxUniformBuffers),
+        GPU::DescriptorPoolSize::combined_texture_sampler(MaxCombinedTextureSamplers),
+    };
+    
+    data.pool = GPU::descriptor_pool_create(render_device->get_device(),
+        GPU::DescriptorPoolCreateInfo::create(MaxSets, pool_sizes));
 }
 
 FrameContext::~FrameContext()
@@ -48,11 +57,15 @@ FrameContext::~FrameContext()
 
     data.render_device->get_gpu_memory_allocator()->free(data.transient_vertex_buffer_allocation);
     GPU::buffer_destroy(data.transient_vertex_buffer);
+
+    GPU::descriptor_pool_destroy(data.pool);
 }
 
 void FrameContext::reset()
 {
     data.current_offset = 0;
+
+    GPU::descriptor_pool_reset(data.pool);
 }
 
 void FrameContext::syncronize_memory(GPU::CommandBufferID command_buffer)
@@ -83,6 +96,17 @@ TransientAllocation FrameContext::allocate_transient_vertex(usize size)
 
     data.current_offset += size;
     return allocation;
+}
+
+GPU::DescriptorSetID FrameContext::allocate_descriptor_set(GPU::DescriptorSetLayoutID set_layout)
+{
+    GPU::DescriptorSetID set = GPU::DescriptorSetID::invalid();
+    
+    GPU::descriptor_set_allocate(data.render_device->get_device(),
+        GPU::DescriptorSetAllocateInfo::create(data.pool, Slice(&set_layout, 1)),
+        Slice(&set, 1));
+
+    return set;
 }
 
 GPU::BufferID FrameContext::get_transient_vertex_buffer()

@@ -19,7 +19,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
     Graphics::Shader primitive_shader = {};
     primitive_shader.init(allocator,
         {
-            .file_path = "shaders/bread/2D/PrimitiveBatch.slang.spirv",
+            .file_path = "shaders/bread/2D/GeometryBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }
@@ -28,7 +28,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
     { // Line
         const GPU::VertexBinding vertex_bindings[] =
         {
-            GPU::VertexBinding::create(0, sizeof(Primitive), GPU::InputRate::Vertex),
+            GPU::VertexBinding::create(0, sizeof(Vertex), GPU::InputRate::Vertex),
         };
 
         const GPU::VertexAttribute vertex_attributes[] =
@@ -57,7 +57,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
     { // Triangle
         const GPU::VertexBinding vertex_bindings[] =
         {
-            GPU::VertexBinding::create(0, sizeof(Primitive), GPU::InputRate::Vertex),
+            GPU::VertexBinding::create(0, sizeof(Vertex), GPU::InputRate::Vertex),
         };
 
         const GPU::VertexAttribute vertex_attributes[] =
@@ -85,7 +85,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
 
     primitive_shader.destroy();
 
-    data.primitives = Array<Primitive>::with_size(allocator, 4);
+    data.vertices = Array<Vertex>::with_size(allocator, 4);
     data.batches = Array<Batch>::with_size(allocator, 4);
     data.current_topology = GPU::PrimitiveTopology::Unknown;
     data.state = RecordingState::End;
@@ -93,12 +93,12 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
 
 GeometryBatch::~GeometryBatch()
 {
-    GPU::pipeline_layout_destroy(data.line_pipeline_layout);
     GPU::pipeline_destroy(data.line_pipeline);
-    GPU::pipeline_layout_destroy(data.triangle_pipeline_layout);
+    GPU::pipeline_layout_destroy(data.line_pipeline_layout);
     GPU::pipeline_destroy(data.triangle_pipeline);
+    GPU::pipeline_layout_destroy(data.triangle_pipeline_layout);
 
-    data.primitives.destroy();
+    data.vertices.destroy();
     data.batches.destroy();
 }
 
@@ -106,7 +106,7 @@ void GeometryBatch::begin(Mat4 projection)
 {
     DebugAssert(data.state == RecordingState::End, "batcher is still open");
 
-    data.primitives.clear();
+    data.vertices.clear();
     data.batches.clear();
     data.current_topology = GPU::PrimitiveTopology::Unknown;
     data.state = RecordingState::Begin;
@@ -123,31 +123,58 @@ void GeometryBatch::end()
     data.state = RecordingState::End;
 }
 
+void GeometryBatch::draw_line_vertex(const Vertex& begin, const Vertex& end)
+{
+    _try_begin_new_batch(GPU::PrimitiveTopology::LineList);
+
+    (void)data.vertices.add(begin);
+    (void)data.vertices.add(end);
+    data.batches.last().vertex_count += 2;
+}
+
+void GeometryBatch::draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+{
+    _try_begin_new_batch(GPU::PrimitiveTopology::TriangleList);
+
+    (void)data.vertices.add(v1);
+    (void)data.vertices.add(v2);
+    (void)data.vertices.add(v3);
+    data.batches.last().vertex_count += 3;
+}
+
 void GeometryBatch::draw_line(const Vector2& begin, const Vector2& end, const Color& color)
 {
-    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
-    if(data.current_topology != GPU::PrimitiveTopology::LineList || data.batches.is_empty())
-    {
-        _set_topology(GPU::PrimitiveTopology::LineList);
-    }
-
-    (void)data.primitives.add(Primitive{.position = begin, .color = color});
-    (void)data.primitives.add(Primitive{.position = end, .color = color});
-    data.batches.last().vertex_count += 2;
+    draw_line_vertex({.position = begin, .color = color}, {.position = end, .color = color});
 }
 
 void GeometryBatch::draw_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color)
 {
-    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
-    if(data.current_topology != GPU::PrimitiveTopology::TriangleList || data.batches.is_empty())
-    {
-        _set_topology(GPU::PrimitiveTopology::TriangleList);
-    }
+    draw_line(v1, v2, color);
+    draw_line(v2, v3, color);
+    draw_line(v3, v1, color);
+}
 
-    (void)data.primitives.add(Primitive{.position = v1, .color = color});
-    (void)data.primitives.add(Primitive{.position = v2, .color = color});
-    (void)data.primitives.add(Primitive{.position = v3, .color = color});
-    data.batches.last().vertex_count += 3;
+void GeometryBatch::draw_fill_triangle(const Vector2& v1, const Vector2& v2, const Vector2& v3, const Color& color)
+{
+    draw_triangle_vertex({.position = v1, .color = color},
+        {.position = v2, .color = color}, {.position = v3, .color = color});
+}
+
+void GeometryBatch::draw_rectangle(const Rect2D& rect, const Color& color)
+{
+    draw_line(rect.position, rect.position + Vector2(rect.size.x, 0), color);
+    draw_line(rect.position + Vector2(rect.size.x, 0), rect.position + rect.size, color);
+    draw_line(rect.position + rect.size, rect.position + Vector2(0, rect.size.y), color);
+    draw_line(rect.position + Vector2(0, rect.size.y), rect.position, color);
+}
+
+void GeometryBatch::draw_fill_rectangle(const Rect2D& rect, const Color& color)
+{
+    draw_fill_triangle(rect.position, rect.position + rect.size,
+        rect.position + Vector2(rect.size.x, 0), color);
+
+    draw_fill_triangle(rect.position, rect.position + Vector2(0, rect.size.y),
+        rect.position + rect.size, color);
 }
 
 Slice<GeometryBatch::Batch> GeometryBatch::get_batches()
@@ -155,9 +182,18 @@ Slice<GeometryBatch::Batch> GeometryBatch::get_batches()
     return data.batches.slice();
 }
 
-Slice<GeometryBatch::Primitive> GeometryBatch::get_primitives()
+Slice<GeometryBatch::Vertex> GeometryBatch::get_vertices()
 {
-    return data.primitives.slice();
+    return data.vertices.slice();
+}
+
+void GeometryBatch::_try_begin_new_batch(GPU::PrimitiveTopology topology)
+{
+    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
+    if(data.current_topology != topology || data.batches.is_empty())
+    {
+        _set_topology(topology);
+    }
 }
 
 void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
@@ -176,7 +212,7 @@ void GeometryBatch::_set_topology(GPU::PrimitiveTopology new_topology)
         .pipeline = pipeline,
         .pipeline_layout = pipeline_layout,
         .block = data.block,
-        .vb_offset = data.primitives.count,
+        .vb_offset = data.vertices.count,
         .vertex_count = 0,
     };
 

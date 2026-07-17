@@ -40,6 +40,7 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     {
         .command_buffer = command_buffer,
         .global_device_vertex_buffer = context.get_transient_vertex_buffer_local(),
+        .context = context,
     };
 
     const GPU::PipelineTextureBarrier render_attachment_barrier =
