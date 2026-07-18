@@ -37,6 +37,9 @@ Renderer::Renderer(const RendererCreateInfo& info)
 
 Renderer::~Renderer()
 {
+    // Work may be on flight.
+    GPU::queue_wait_idle(data.render_device->get_graphics_queue());
+
     (void)data.render_finished_semaphores.iter().for_each([](GPU::SemaphoreID sem)
     {
         GPU::semaphore_destroy(sem);
