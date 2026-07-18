@@ -19,7 +19,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
     Graphics::Shader primitive_shader = {};
     primitive_shader.init(allocator,
         {
-            .file_path = "shaders/bread/2D/GeometryBatch.slang.spirv",
+            .file_path = "shaders/packages/2D/GeometryBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }

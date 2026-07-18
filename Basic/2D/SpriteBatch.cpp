@@ -27,7 +27,7 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
     Graphics::Shader sprite_shader = {};
     sprite_shader.init(allocator,
         {
-            .file_path = "shaders/bread/2D/SpriteBatch.slang.spirv",
+            .file_path = "shaders/packages/2D/SpriteBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }
