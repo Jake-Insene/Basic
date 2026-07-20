@@ -4,9 +4,12 @@
 #include <math/vec2.h>
 #include <math/mat4.h>
 #include <math/rect_2d.h>
+#include <resource/texture.h>
 
 #include "Basic/Core/RenderCore.hpp"
 
+
+struct Texture2D;
 
 namespace Basic
 {
@@ -88,7 +91,7 @@ struct SpriteBatch
     void end();
 
     void draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const Color& color,
-        GPU::TextureViewID texture_view, SpriteFilter filter);
+        Texture2D* texture, SpriteFilter filter);
 
     Slice<Batch> get_batches();
     Slice<Vertex> get_vertices();

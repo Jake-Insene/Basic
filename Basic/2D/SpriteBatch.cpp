@@ -131,31 +131,36 @@ void SpriteBatch::end()
 }
 
 void SpriteBatch::draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const Color& color,
-    GPU::TextureViewID texture_view, SpriteFilter filter)
+    Texture2D* texture, SpriteFilter filter)
 {
     DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
+    GPU::TextureViewID texture_view = Engine::get_render_device()->get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
+
+    Rect2D normalized_uv = Rect2D(
+        uv_rect.position / Vector2(texture->get_size()),
+        uv_rect.size / Vector2(texture->get_size())
+    );
+
     _bind_to_batch(texture_view, filter);
 
     const Vector2 uvs[] =
     {
-        uv_rect.position + Vector2(0, uv_rect.size.y),
-        uv_rect.position + Vector2(uv_rect.size.x, 0),
-        uv_rect.position + uv_rect.size,
-
-        uv_rect.position + Vector2(0, uv_rect.size.y),
-        uv_rect.position,
-        uv_rect.position + Vector2(uv_rect.size.x, 0),
+        normalized_uv.position + Vector2(0, normalized_uv.size.y), // bottom-left
+        normalized_uv.position + Vector2(normalized_uv.size.x, 0), // top-right
+        normalized_uv.position + normalized_uv.size, // bottom-right
+        normalized_uv.position + Vector2(0, normalized_uv.size.y), // bottom-left
+        normalized_uv.position, // top-left
+        normalized_uv.position + Vector2(normalized_uv.size.x, 0), // top-right
     };
 
     const Vector2 positions[] =
     {
-        rect.position,
-        rect.position + rect.size,
-        rect.position + Vector2(rect.size.x, 0),
-
-        rect.position,
-        rect.position + Vector2(0, rect.size.y),
-        rect.position + rect.size,
+        rect.position, // bottom-left
+        rect.position + rect.size, // top-right
+        rect.position + Vector2(rect.size.x, 0), // bottom-right
+        rect.position, // bottom-left
+        rect.position + Vector2(0, rect.size.y), // top-left
+        rect.position + rect.size, // top-right
     };
 
     (void)data.vertices.add(Vertex{.position = positions[0], .uv = uvs[0], .color = color});
