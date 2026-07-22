@@ -23,6 +23,18 @@ RenderTarget::RenderTarget(GPU::TextureFormat render_target_format, const Vector
             )
         );
 
+        data.allocations[i] = Engine::get_render_device()->get_gpu_memory_allocator()->allocate(
+            Graphics::GPUMemoryAllocator::AllocationTag::Texture,
+            GPU::texture_get_memory_requirements(data.textures[i])
+        );
+
+        GPU::texture_bind_memory_heap(data.textures[i],
+            GPU::BindMemoryInfo::create(
+                Engine::get_render_device()->get_gpu_memory_allocator()->allocation_get_heap(data.allocations[i]),
+                Engine::get_render_device()->get_gpu_memory_allocator()->allocation_get_offset(data.allocations[i])
+            )
+        );
+
         data.texture_views[i] = GPU::texture_view_create(
             Engine::get_render_device()->get_device(),
             GPU::TextureViewCreateInfo::create(
@@ -33,6 +45,9 @@ RenderTarget::RenderTarget(GPU::TextureFormat render_target_format, const Vector
             )
         );
     }
+
+    data.render_target_format = render_target_format;
+    data.size = size;
 }
 
 RenderTarget::~RenderTarget()
@@ -40,6 +55,8 @@ RenderTarget::~RenderTarget()
     for(u32 i = 0; i < MaxFramesInFlight; i++)
     {
         GPU::texture_view_destroy(get_texture_view(i));
+     
+        Engine::get_render_device()->get_gpu_memory_allocator()->free(data.allocations[i]);
         GPU::texture_destroy(get_texture(i));
     }
 }

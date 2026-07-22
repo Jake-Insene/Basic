@@ -177,12 +177,12 @@ void GeometryBatch::draw_fill_rectangle(const Rect2D& rect, const Color& color)
         rect.position + rect.size, color);
 }
 
-Slice<GeometryBatch::Batch> GeometryBatch::get_batches()
+Slice<const GeometryBatch::Batch> GeometryBatch::get_batches() const
 {
     return data.batches.slice();
 }
 
-Slice<GeometryBatch::Vertex> GeometryBatch::get_vertices()
+Slice<const GeometryBatch::Vertex> GeometryBatch::get_vertices() const
 {
     return data.vertices.slice();
 }

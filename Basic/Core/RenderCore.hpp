@@ -11,6 +11,7 @@ static constexpr u32 MaxFramesInFlight = 3;
 
 static constexpr GPU::TextureFormat DefaultViewportFormat = GPU::TextureFormat::RGBA8Srgb;
 
+// Virtual render target. 
 struct [[nodiscard]] RenderTargetHandle
 {
     static constexpr u32 BackbufferID = 0xFFFF'FFFF;

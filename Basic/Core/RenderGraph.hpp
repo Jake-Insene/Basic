@@ -17,16 +17,28 @@ struct PassResources
     GPU::CommandBufferID command_buffer;
 
     GPU::BufferID global_device_vertex_buffer;
+    Slice<GPU::TextureViewID> resolved_render_targets;
 
     FrameContext& context;
+
+    GPU::TextureViewID get_render_target_view(RenderTargetHandle handle)
+    {
+        return resolved_render_targets[handle.id];
+    }
 };
 
-struct PassAttachment
+struct PassWriteAttachment
 {
     RenderTargetHandle rt;
     GPU::LoadOp load_op;
     GPU::StoreOp store_op;
     GPU::ClearValue clear_value;
+};
+
+struct PassTexture
+{
+    RenderTargetHandle texture;
+    GPU::ShaderStage stage;
 };
 
 struct PassBuilder
@@ -37,14 +49,17 @@ struct PassBuilder
     struct InternalData
     {
         Mem::Allocator* allocator;
-        Array<PassAttachment> attachments;
+        Array<PassWriteAttachment> writes;
+        Array<PassTexture> textures;
     } data;
 
     PassBuilder(Mem::Allocator* allocator);
     ~PassBuilder();
 
-    PassBuilder& write_render_attachment(RenderTargetHandle rt, GPU::LoadOp load_op,
+    PassBuilder& write_render_attachment(RenderTargetHandle texture, GPU::LoadOp load_op,
         GPU::StoreOp store_op, GPU::ClearValue clear_value);
+
+    PassBuilder& read_texture(RenderTargetHandle rt, GPU::ShaderStage stage);
 };
 
 struct RenderGraph
@@ -54,9 +69,20 @@ struct RenderGraph
 
     struct Pass
     {
-        Array<PassAttachment> attachments;
+        Array<PassWriteAttachment> writes;
+        Array<PassTexture> textures;
         Delegate<void(PassBuilder&)> setup;
         Delegate<void(PassResources&)> execute;
+    };
+
+    struct VirtualRenderTarget
+    {
+        RenderTargetHandle handle;
+        Vector2I extent;
+        GPU::TextureFormat format;
+        GPU::TextureID texture;
+        GPU::TextureViewID texture_view;
+        bool imported;
     };
 
     struct InternalData
@@ -67,15 +93,16 @@ struct RenderGraph
         FrameContext frame_context[MaxFramesInFlight];
 
         Array<Pass> passes;
+        Array<VirtualRenderTarget> virtual_render_targets;
     } data;
 
     RenderGraph(Mem::Allocator* allocator, Graphics::RenderDevice* render_device);
     ~RenderGraph();
 
-    FrameContext& get_frame_context(const FrameInfo& frame_info)
-    {
-        return data.frame_context[frame_info.frame_index];
-    }
+    FrameContext& get_frame_context(const FrameInfo& frame_info);
+
+    RenderTargetHandle import_render_target(GPU::TextureID texture, GPU::TextureViewID texture_view,
+        const Vector2I& extent);
 
     template<typename SetupFn, typename ExecuteFn>
     void add_raster_pass(SetupFn setup, ExecuteFn execute)
@@ -83,7 +110,8 @@ struct RenderGraph
         Pass& pass = data.passes.add(
             Pass
             {
-                .attachments = Array<PassAttachment>::with_allocator(data.allocator),
+                .writes = Array<PassWriteAttachment>::with_allocator(data.allocator),
+                .textures = Array<PassTexture>::with_allocator(data.allocator),
                 .setup = Delegate<void(PassBuilder&)>::create(data.allocator),
                 .execute = Delegate<void(PassResources&)>::create(data.allocator)
             }
@@ -96,6 +124,18 @@ struct RenderGraph
 
     void compile();
     void execute(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
+
+    void _begin_backbuffer(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
+    void _end_backbuffer(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
+
+    Vector2I _resolve_extent_for_pass(PassResources& resources, Pass& pass, const FrameInfo& frame_info);
+    Slice<GPU::AttachmentInfo> _resolve_attachments_for_pass(PassResources& resources, Pass& pass,
+        const FrameInfo& frame_info);
+
+    Array<GPU::PipelineTextureBarrier> _resolve_begin_barriers_for_pass(PassResources& resources, Pass& pass,
+        const FrameInfo& frame_info);
+    Array<GPU::PipelineTextureBarrier> _resolve_end_barriers_for_pass(PassResources& resources, Pass& pass,
+        const FrameInfo& frame_info);
 };
 
 }

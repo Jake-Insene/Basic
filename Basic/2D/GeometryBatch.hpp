@@ -88,8 +88,8 @@ struct GeometryBatch
     void draw_rectangle(const Rect2D& rect, const Color& color);
     void draw_fill_rectangle(const Rect2D& rect, const Color& color);
 
-    Slice<Batch> get_batches();
-    Slice<Vertex> get_vertices();
+    Slice<const Batch> get_batches() const;
+    Slice<const Vertex> get_vertices() const;
 
     void _try_begin_new_batch(GPU::PrimitiveTopology new_topology);
     void _set_topology(GPU::PrimitiveTopology new_topology);
