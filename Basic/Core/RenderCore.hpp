@@ -11,6 +11,24 @@ static constexpr u32 MaxFramesInFlight = 3;
 
 static constexpr GPU::TextureFormat DefaultViewportFormat = GPU::TextureFormat::RGBA8Srgb;
 
+struct [[nodiscard]] RenderTargetHandle
+{
+    static constexpr u32 BackbufferID = 0xFFFF'FFFF;
+
+    u32 id;
+
+    RenderTargetHandle(u32 _id) : id(_id) {}
+    RenderTargetHandle() : id(0) {}
+
+    static constexpr RenderTargetHandle backbuffer()
+    {
+        return BackbufferID;
+    }
+
+    bool is_backbuffer() const { return id == BackbufferID;}
+    bool is_valid() const { return id != 0; }
+};
+
 enum class FrameFlags : u8
 {
     // The frame was acquired.
