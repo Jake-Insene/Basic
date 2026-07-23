@@ -1,5 +1,7 @@
 #include "Basic/Core/RenderGraph.hpp"
 
+#include <os/os.h>
+
 
 namespace Basic
 {
@@ -36,6 +38,12 @@ PassBuilder& PassBuilder::read_texture(RenderTargetHandle texture, GPU::ShaderSt
     return *this;
 }
 
+void PassBuilder::clear()
+{
+    data.writes.clear();
+    data.textures.clear();
+}
+
 RenderGraph::RenderGraph(Mem::Allocator* allocator, Graphics::RenderDevice* render_device) :
 data{
     .allocator = allocator,
@@ -43,12 +51,16 @@ data{
     .frame_context = {render_device, render_device, render_device},
     .passes = Array<Pass>::with_size(allocator, 4),
     .virtual_render_targets = Array<VirtualRenderTarget>::with_allocator(allocator),
+    .tmp_allocator = {},
 }
 {
+    data.tmp_allocator.init(OS::map_memory(MiB(1), OS::MapAccess::ReadWrite));
 }
 
 RenderGraph::~RenderGraph()
 {
+    OS::unmap_memory(data.tmp_allocator.sp);
+
     clear();
     
     data.passes.destroy();
@@ -93,12 +105,13 @@ void RenderGraph::clear()
 
 void RenderGraph::compile()
 {
+    PassBuilder builder{data.allocator};
     for(Pass& pass : data.passes.iter())
     {
-        PassBuilder builder{data.allocator};
         pass.setup.call(builder);
         pass.writes.add_slice(builder.data.writes.slice());
         pass.textures.add_slice(builder.data.textures.slice());
+        builder.clear();
     }
 }
 
@@ -107,6 +120,9 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     FrameContext& context =  get_frame_context(frame_info);
     context.syncronize_memory(command_buffer);
 
+    data.tmp_allocator.reset();
+    Mem::Allocator* allocator = &data.tmp_allocator;
+    
     Array resolved_render_targets = Array<GPU::TextureViewID>::with_size(
         data.allocator, data.virtual_render_targets.count);
     for(VirtualRenderTarget& vrt : data.virtual_render_targets.iter())
@@ -126,53 +142,7 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
 
     for(Pass& pass : data.passes.iter())
     {
-        Vector2I offset = Vector2I();
-        Vector2I extent = _resolve_extent_for_pass(resources, pass, frame_info);
-
-        Slice resolved_attachments = _resolve_attachments_for_pass(resources, pass, frame_info);
-        Array begin_barriers = _resolve_begin_barriers_for_pass(resources, pass, frame_info);
-        Array end_barriers = _resolve_end_barriers_for_pass(resources, pass, frame_info);
-
-        GPU::command_buffer_pipeline_barrier(command_buffer,
-            GPU::PipelineBarrier::texture_barrier(
-                GPU::PipelineStages::RenderOutput,
-                GPU::PipelineStages::RenderOutput,
-                begin_barriers.slice()
-            )
-        );
-        
-        GPU::command_buffer_begin_renderpass(
-            command_buffer,
-            {
-                .offset = offset,
-                .extent = Vector3U(extent.x, extent.y, 1),
-                .render_attachments = resolved_attachments,
-                .depth_attachment = {},
-                .stencil_attachment = {},
-            }
-        );
-
-        GPU::Viewport viewport = GPU::Viewport::extent(extent.x, extent.y);
-        GPU::Scissor scissor = GPU::Scissor::extent(extent.x, extent.y);
-
-        GPU::command_buffer_set_viewports(command_buffer, 0, Slice(&viewport, 1));
-        GPU::command_buffer_set_scissors(command_buffer, 0, Slice(&scissor, 1));
-
-        pass.execute.call(resources);
-        
-        GPU::command_buffer_end_renderpass(command_buffer, {});
-        GPU::command_buffer_pipeline_barrier(command_buffer,
-            GPU::PipelineBarrier::texture_barrier(
-                GPU::PipelineStages::RenderOutput,
-                GPU::PipelineStages::RenderOutput,
-                end_barriers.slice()
-            )
-        );
-
-        begin_barriers.destroy();
-        end_barriers.destroy();
-
-        data.allocator->free(Mem::to_bytes(resolved_attachments));
+        _execute_pass(allocator, command_buffer, pass, resources, frame_info);
     }
 
     resolved_render_targets.destroy();
@@ -239,10 +209,10 @@ Vector2I RenderGraph::_resolve_extent_for_pass(PassResources&, Pass& pass, const
     return extent;
 }
 
-Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(PassResources& resources, Pass& pass,
-    const FrameInfo& frame_info)
+Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(Mem::Allocator* allocator, 
+    PassResources& resources, Pass& pass, const FrameInfo& frame_info)
 {
-    Slice<GPU::AttachmentInfo> resolved_attachments = data.allocator->array<GPU::AttachmentInfo>(
+    Slice<GPU::AttachmentInfo> resolved_attachments = allocator->array<GPU::AttachmentInfo>(
         pass.writes.count);
 
     for(usize i = 0; i < pass.writes.count; i ++)
@@ -267,12 +237,22 @@ Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(PassResour
     return resolved_attachments;
 }
 
-Array<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass(PassResources&,
-    Pass& pass, const FrameInfo&)
+Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass(Mem::Allocator* allocator,
+    PassResources&, Pass& pass, const FrameInfo&)
 {
     // do not put barries for the backbuffer attachment
-    Array begin_barriers = Array<GPU::PipelineTextureBarrier>::with_allocator(data.allocator);
+    usize barrier_count = 0;
+    for(const PassWriteAttachment& attachment : pass.writes.iter())
+    {
+        if(attachment.rt.is_backbuffer())
+        {
+            continue;
+        }
+        barrier_count++;
+    }
+    Slice begin_barriers = allocator->array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
 
+    usize barrier_i = 0;
     for(const PassWriteAttachment& attachment : pass.writes.iter())
     {
         if(attachment.rt.is_backbuffer())
@@ -280,41 +260,51 @@ Array<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass
             continue;
         }
 
-        (void)begin_barriers.add(
-            {
-                .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .src_layout = GPU::TextureLayout::Unknown,
-                .dest_layout = GPU::TextureLayout::RenderAttachment,
-                .texture = data.virtual_render_targets.get(attachment.rt.id).texture,
-                .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
-            }
-        );
+        begin_barriers[barrier_i] = GPU::PipelineTextureBarrier
+        {
+            .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .src_layout = GPU::TextureLayout::Unknown,
+            .dest_layout = GPU::TextureLayout::RenderAttachment,
+            .texture = data.virtual_render_targets.get(attachment.rt.id).texture,
+            .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
+        };
+        barrier_i++;
     }
 
     for(const PassTexture& texture : pass.textures.iter())
     {
-        (void)begin_barriers.add(
-            {
-                .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .src_layout = GPU::TextureLayout::RenderAttachment,
-                .dest_layout = GPU::TextureLayout::ShaderReadOnly,
-                .texture = data.virtual_render_targets.get(texture.texture.id).texture,
-                .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
-            }
-        );
+        begin_barriers[barrier_i] = GPU::PipelineTextureBarrier
+        {
+            .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .src_layout = GPU::TextureLayout::RenderAttachment,
+            .dest_layout = GPU::TextureLayout::ShaderReadOnly,
+            .texture = data.virtual_render_targets.get(texture.texture.id).texture,
+            .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
+        };
+        barrier_i++;
     }
 
-    return begin_barriers;
+    return begin_barriers.slice(barrier_i);
 }
 
-Array<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(PassResources&,
-    Pass& pass, const FrameInfo&)
+Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(Mem::Allocator* allocator,
+    PassResources&, Pass& pass, const FrameInfo&)
 {
     // do not put barries for the backbuffer attachment
-    Array end_barriers = Array<GPU::PipelineTextureBarrier>::with_allocator(data.allocator);
+    usize barrier_count = 0;
+    for(const PassWriteAttachment& attachment : pass.writes.iter())
+    {
+        if(attachment.rt.is_backbuffer())
+        {
+            continue;
+        }
+        barrier_count++;
+    }
+    Slice end_barriers = allocator->array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
 
+    usize barrier_i = 0;
     for(const PassWriteAttachment& attachment : pass.writes.iter())
     {
         if(attachment.rt.is_backbuffer())
@@ -322,19 +312,66 @@ Array<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(P
             continue;
         }
 
-        (void)end_barriers.add(
-            {
-                .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
-                .src_layout = GPU::TextureLayout::RenderAttachment,
-                .dest_layout = GPU::TextureLayout::RenderAttachment,
-                .texture = data.virtual_render_targets.get(attachment.rt.id).texture,
-                .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
-            }
-        );
+        end_barriers[barrier_i] = GPU::PipelineTextureBarrier
+        {
+            .src_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .dest_masks = GPU::AccessMasks::RenderAttachmentWrite,
+            .src_layout = GPU::TextureLayout::RenderAttachment,
+            .dest_layout = GPU::TextureLayout::RenderAttachment,
+            .texture = data.virtual_render_targets.get(attachment.rt.id).texture,
+            .subresource_range = GPU::TextureSubresourceRange::color(0, 1, 0, 1),
+        };
+        barrier_i++;
     }
 
-    return end_barriers;
+    return end_barriers.slice(barrier_i);
+}
+
+void RenderGraph::_execute_pass(Mem::Allocator* allocator, GPU::CommandBufferID command_buffer,
+    Pass& pass, PassResources& resources, const FrameInfo& frame_info)
+{
+    Vector2I offset = Vector2I();
+    Vector2I extent = _resolve_extent_for_pass(resources, pass, frame_info);
+
+    Slice resolved_attachments = _resolve_attachments_for_pass(allocator, resources, pass, frame_info);
+    Slice begin_barriers = _resolve_begin_barriers_for_pass(allocator, resources, pass, frame_info);
+    Slice end_barriers = _resolve_end_barriers_for_pass(allocator, resources, pass, frame_info);
+
+    GPU::command_buffer_pipeline_barrier(command_buffer,
+        GPU::PipelineBarrier::texture_barrier(
+            GPU::PipelineStages::RenderOutput,
+            GPU::PipelineStages::RenderOutput,
+            begin_barriers
+        )
+    );
+    
+    GPU::command_buffer_begin_renderpass(
+        command_buffer,
+        {
+            .offset = offset,
+            .extent = Vector3U(extent.x, extent.y, 1),
+            .render_attachments = resolved_attachments,
+            .depth_attachment = {},
+            .stencil_attachment = {},
+        }
+    );
+
+    GPU::Viewport viewport = GPU::Viewport::extent(extent.x, extent.y);
+    GPU::Scissor scissor = GPU::Scissor::extent(extent.x, extent.y);
+
+    GPU::command_buffer_set_viewports(command_buffer, 0, Slice(&viewport, 1));
+    GPU::command_buffer_set_scissors(command_buffer, 0, Slice(&scissor, 1));
+
+    pass.execute.call(resources);
+    
+    GPU::command_buffer_end_renderpass(command_buffer, {});
+    GPU::command_buffer_pipeline_barrier(command_buffer,
+        GPU::PipelineBarrier::texture_barrier(
+            GPU::PipelineStages::RenderOutput,
+            GPU::PipelineStages::RenderOutput,
+            end_barriers
+        )
+    );
 }
 
 }

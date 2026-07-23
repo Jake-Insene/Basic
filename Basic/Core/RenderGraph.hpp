@@ -2,6 +2,7 @@
 #include <collections/array.h>
 #include <collections/delegate.h>
 #include <graphics/render_device.h>
+#include <mem/stack_allocator.h>
 
 #include "Basic/Core/RenderCore.hpp"
 
@@ -56,6 +57,8 @@ struct PassBuilder
     PassBuilder(Mem::Allocator* allocator);
     ~PassBuilder();
 
+    void clear();
+
     PassBuilder& write_render_attachment(RenderTargetHandle texture, GPU::LoadOp load_op,
         GPU::StoreOp store_op, GPU::ClearValue clear_value);
 
@@ -94,6 +97,8 @@ struct RenderGraph
 
         Array<Pass> passes;
         Array<VirtualRenderTarget> virtual_render_targets;
+
+        Mem::StackAllocator tmp_allocator;
     } data;
 
     RenderGraph(Mem::Allocator* allocator, Graphics::RenderDevice* render_device);
@@ -129,13 +134,16 @@ struct RenderGraph
     void _end_backbuffer(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
 
     Vector2I _resolve_extent_for_pass(PassResources& resources, Pass& pass, const FrameInfo& frame_info);
-    Slice<GPU::AttachmentInfo> _resolve_attachments_for_pass(PassResources& resources, Pass& pass,
+    Slice<GPU::AttachmentInfo> _resolve_attachments_for_pass(Mem::Allocator* allocator, PassResources& resources,
+        Pass& pass, const FrameInfo& frame_info);
+
+    Slice<GPU::PipelineTextureBarrier> _resolve_begin_barriers_for_pass(Mem::Allocator* allocator, PassResources& resources, Pass& pass,
+        const FrameInfo& frame_info);
+    Slice<GPU::PipelineTextureBarrier> _resolve_end_barriers_for_pass(Mem::Allocator* allocator, PassResources& resources, Pass& pass,
         const FrameInfo& frame_info);
 
-    Array<GPU::PipelineTextureBarrier> _resolve_begin_barriers_for_pass(PassResources& resources, Pass& pass,
-        const FrameInfo& frame_info);
-    Array<GPU::PipelineTextureBarrier> _resolve_end_barriers_for_pass(PassResources& resources, Pass& pass,
-        const FrameInfo& frame_info);
+    void _execute_pass(Mem::Allocator* allocator, GPU::CommandBufferID command_buffer, Pass& pass,
+        PassResources& resources, const FrameInfo& frame_info);
 };
 
 }
