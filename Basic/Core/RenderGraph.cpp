@@ -218,7 +218,6 @@ Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(Mem::Alloc
     for(usize i = 0; i < pass.writes.count; i ++)
     {
         const PassWriteAttachment& attachment = pass.writes.get(i);
-        // TODO: get texture view from pool
         GPU::TextureViewID texture_view = attachment.rt.is_backbuffer() ?
             frame_info.image_view : resources.get_render_target_view(attachment.rt);
 

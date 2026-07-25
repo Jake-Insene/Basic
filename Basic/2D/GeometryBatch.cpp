@@ -25,6 +25,15 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
         }
     );
 
+    const GPU::ColorBlendAttachmentState color_blend_attachments[] =
+    {
+        GPU::ColorBlendAttachmentState::create(
+            true, GPU::BlendFactor::SrcAlpha, GPU::BlendFactor::OneMinusSrcAlpha, GPU::BlendOp::Add,
+            GPU::BlendFactor::One, GPU::BlendFactor::OneMinusSrcAlpha, GPU::BlendOp::Add,
+            GPU::ColorComponentFlags(0xFF)
+        ),
+    };
+
     { // Line
         const GPU::VertexBinding vertex_bindings[] =
         {
@@ -49,6 +58,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
                 GPU::RasterizerState::state(GPU::PolygonMode::Fill, GPU::CullMode::Front, GPU::FrontFace::ClockWise),
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
+                GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
                 data.line_pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
             )
         );
@@ -78,6 +88,7 @@ GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat rende
                 GPU::RasterizerState::state(GPU::PolygonMode::Fill, GPU::CullMode::Front, GPU::FrontFace::ClockWise),
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
+                GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
                 data.triangle_pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
             )
         );

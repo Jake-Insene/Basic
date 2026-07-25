@@ -93,8 +93,8 @@ struct SpriteBatch
     void draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const Color& color,
         Texture2D* texture, SpriteFilter filter);
 
-    Slice<Batch> get_batches();
-    Slice<Vertex> get_vertices();
+    Slice<Batch> get_batches() const;
+    Slice<Vertex> get_vertices() const;
 
     void _bind_to_batch(GPU::TextureViewID texture_view, SpriteFilter filter);
 };

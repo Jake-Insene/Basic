@@ -49,6 +49,15 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
             GPU::PipelineLayoutCreateInfo::create(blocks, Slice(&data.set_layout, 1))
         );
 
+        const GPU::ColorBlendAttachmentState color_blend_attachments[] =
+        {
+            GPU::ColorBlendAttachmentState::create(
+                true, GPU::BlendFactor::SrcAlpha, GPU::BlendFactor::OneMinusSrcAlpha, GPU::BlendOp::Add,
+                GPU::BlendFactor::One, GPU::BlendFactor::OneMinusSrcAlpha, GPU::BlendOp::Add,
+                GPU::ColorComponentFlags(0xFF)
+            ),
+        };
+
         data.pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
@@ -58,6 +67,7 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
                 GPU::RasterizerState::state(GPU::PolygonMode::Fill, GPU::CullMode::Front, GPU::FrontFace::ClockWise),
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
+                GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
                 data.pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
             )
         );
@@ -172,12 +182,12 @@ void SpriteBatch::draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const 
     data.batches.last().vertex_count += 6;
 }
 
-Slice<SpriteBatch::Batch> SpriteBatch::get_batches()
+Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const
 {
     return data.batches.slice();
 }
 
-Slice<SpriteBatch::Vertex> SpriteBatch::get_vertices()
+Slice<SpriteBatch::Vertex> SpriteBatch::get_vertices() const
 {
     return data.vertices.slice();
 }
