@@ -96,7 +96,7 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
     for(usize i = 0; i < u32(SpriteFilter::MaxCount); i++)
     {
         data.samplers[i] = GPU::sampler_create(Engine::get_render_device()->get_device(),
-            GPU::SamplerCreateInfo::create(gpu_filters[0], gpu_filters[0],
+            GPU::SamplerCreateInfo::create(gpu_filters[i], gpu_filters[i],
                 gpu_mimap_modes[i], GPU::SamplerAddressMode::Repeat, GPU::SamplerAddressMode::Repeat,
                 GPU::SamplerAddressMode::Repeat, 0.F, false, 1.F, false, GPU::CompareOp::Always,
                 0.F, 0.F));

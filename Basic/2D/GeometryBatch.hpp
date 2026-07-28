@@ -1,11 +1,11 @@
 #pragma once
 #include <collections/array.h>
+#include <gpu/gpu.h>
 #include <math/color.h>
 #include <math/vec2.h>
 #include <math/mat4.h>
 #include <math/rect_2d.h>
-
-#include "Basic/Core/RenderCore.hpp"
+#include <math/transform_2d.h>
 
 
 namespace Basic
@@ -87,6 +87,7 @@ struct GeometryBatch
 
     void draw_rectangle(const Rect2D& rect, const Color& color);
     void draw_fill_rectangle(const Rect2D& rect, const Color& color);
+    void draw_fill_rectangle_transformed(const Rect2D& rect, const Transform2D& transform, const Color& color);
 
     Slice<const Batch> get_batches() const;
     Slice<const Vertex> get_vertices() const;

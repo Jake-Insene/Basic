@@ -188,6 +188,18 @@ void GeometryBatch::draw_fill_rectangle(const Rect2D& rect, const Color& color)
         rect.position + rect.size, color);
 }
 
+void GeometryBatch::draw_fill_rectangle_transformed(const Rect2D& rect, const Transform2D& transform,
+    const Color& color)
+{
+    const Vector2 v1 = rect.position;
+    const Vector2 v2 = rect.position + rect.size;
+    const Vector2 v3 = rect.position + Vector2(rect.size.x, 0);
+    const Vector2 v4 = rect.position + Vector2(0, rect.size.y);
+
+    draw_fill_triangle(transform * v1, transform * v2, transform * v3, color);
+    draw_fill_triangle(transform * v1, transform * v4, transform * v2, color);
+}
+
 Slice<const GeometryBatch::Batch> GeometryBatch::get_batches() const
 {
     return data.batches.slice();

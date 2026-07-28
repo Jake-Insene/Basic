@@ -61,12 +61,12 @@ RenderTarget::~RenderTarget()
     }
 }
 
-GPU::TextureID RenderTarget::get_texture(u32 frame_index)
+GPU::TextureID RenderTarget::get_texture(u32 frame_index) const
 {
     return data.textures[frame_index];
 }
 
-GPU::TextureViewID RenderTarget::get_texture_view(u32 frame_index)
+GPU::TextureViewID RenderTarget::get_texture_view(u32 frame_index) const
 {
     return data.texture_views[frame_index];
 }
