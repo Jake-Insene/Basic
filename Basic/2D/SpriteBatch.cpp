@@ -140,46 +140,68 @@ void SpriteBatch::end()
     data.state = RecordingState::End;
 }
 
+void SpriteBatch::draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const Vertex& v3,
+    GPU::TextureViewID texture_view, SpriteFilter filter)
+{
+    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
+    _bind_to_batch(texture_view, filter);
+
+    (void)data.vertices.add(v1);
+    (void)data.vertices.add(v2);
+    (void)data.vertices.add(v3);
+    data.batches.last().vertex_count += 3;
+}
+
+void SpriteBatch::draw_texture_gpu_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
+    const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter)
+{
+    Rect2D normalized_uv = Rect2D(
+        uv_rect.position / texture_size,
+        uv_rect.size / texture_size
+    );
+
+    const Vector2 v1 = rect.position;
+    const Vector2 v2 = rect.position + rect.size;
+    const Vector2 v3 = rect.position + Vector2(rect.size.x, 0);
+    const Vector2 v4 = rect.position + Vector2(0, rect.size.y);
+
+    draw_triangle_vertex(
+        {.position = transform * v1, .uv = normalized_uv.position + Vector2(0, normalized_uv.size.y), .color = color, },
+        {.position = transform * v2, .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0), .color = color, },
+        {.position = transform * v3, .uv = normalized_uv.position + normalized_uv.size, .color = color, },
+        texture_view, filter
+    );
+
+    draw_triangle_vertex(
+        {.position = transform * v1, .uv = normalized_uv.position + Vector2(0, normalized_uv.size.y), .color = color, },
+        {.position = transform * v4, .uv = normalized_uv.position, .color = color, },
+        {.position = transform * v2, .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0), .color = color, },
+        texture_view, filter
+    );
+}
+
 void SpriteBatch::draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const Color& color,
     Texture2D* texture, SpriteFilter filter)
 {
-    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
+    if(texture == nullptr)
+    {
+        texture = Resource::load<Texture2D>("default:white_texture");
+    }
+
     GPU::TextureViewID texture_view = Engine::get_render_device()->get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
+    draw_texture_gpu_transformed(rect, Transform2D(), uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
+}
 
-    Rect2D normalized_uv = Rect2D(
-        uv_rect.position / Vector2(texture->get_size()),
-        uv_rect.size / Vector2(texture->get_size())
-    );
-
-    _bind_to_batch(texture_view, filter);
-
-    const Vector2 uvs[] =
+void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
+    const Color& color, Texture2D* texture, SpriteFilter filter)
+{
+        if(texture == nullptr)
     {
-        normalized_uv.position + Vector2(0, normalized_uv.size.y), // bottom-left
-        normalized_uv.position + Vector2(normalized_uv.size.x, 0), // top-right
-        normalized_uv.position + normalized_uv.size, // bottom-right
-        normalized_uv.position + Vector2(0, normalized_uv.size.y), // bottom-left
-        normalized_uv.position, // top-left
-        normalized_uv.position + Vector2(normalized_uv.size.x, 0), // top-right
-    };
+        texture = Resource::load<Texture2D>("default:white_texture");
+    }
 
-    const Vector2 positions[] =
-    {
-        rect.position, // bottom-left
-        rect.position + rect.size, // top-right
-        rect.position + Vector2(rect.size.x, 0), // bottom-right
-        rect.position, // bottom-left
-        rect.position + Vector2(0, rect.size.y), // top-left
-        rect.position + rect.size, // top-right
-    };
-
-    (void)data.vertices.add(Vertex{.position = positions[0], .uv = uvs[0], .color = color});
-    (void)data.vertices.add(Vertex{.position = positions[1], .uv = uvs[1], .color = color});
-    (void)data.vertices.add(Vertex{.position = positions[2], .uv = uvs[2], .color = color});
-    (void)data.vertices.add(Vertex{.position = positions[3], .uv = uvs[3], .color = color});
-    (void)data.vertices.add(Vertex{.position = positions[4], .uv = uvs[4], .color = color});
-    (void)data.vertices.add(Vertex{.position = positions[5], .uv = uvs[5], .color = color});
-    data.batches.last().vertex_count += 6;
+    GPU::TextureViewID texture_view = Engine::get_render_device()->get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
+    draw_texture_gpu_transformed(rect, transform, uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
 }
 
 Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const
