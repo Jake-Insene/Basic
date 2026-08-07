@@ -49,12 +49,12 @@ struct PassBuilder
 
     struct InternalData
     {
-        Mem::Allocator* allocator;
+        Mem::Allocator& allocator;
         Array<PassWriteAttachment> writes;
         Array<PassTexture> textures;
     } data;
 
-    PassBuilder(Mem::Allocator* allocator);
+    PassBuilder(Mem::Allocator& allocator);
     ~PassBuilder();
 
     void clear();
@@ -77,7 +77,7 @@ struct RenderGraph
         Delegate<void(PassBuilder&)> setup;
         Delegate<void(PassResources&)> execute;
 
-        Pass(Mem::Allocator* allocator)
+        Pass(Mem::Allocator& allocator)
         : writes(allocator, 4, {}), textures(allocator, 4, {}),
         setup(allocator), execute(allocator)
         {}
@@ -95,7 +95,7 @@ struct RenderGraph
 
     struct InternalData
     {
-        Mem::Allocator* allocator;
+        Mem::Allocator& allocator;
         Graphics::RenderDevice* render_device;
 
         FrameContext frame_context[MaxFramesInFlight];
@@ -106,7 +106,7 @@ struct RenderGraph
         Mem::StackAllocator tmp_allocator;
     } data;
 
-    RenderGraph(Mem::Allocator* allocator, Graphics::RenderDevice* render_device);
+    RenderGraph(Mem::Allocator& allocator, Graphics::RenderDevice* render_device);
     ~RenderGraph();
 
     FrameContext& get_frame_context(const FrameInfo& frame_info);
@@ -131,15 +131,15 @@ struct RenderGraph
     void _end_backbuffer(GPU::CommandBufferID command_buffer, const FrameInfo& frame_info);
 
     Vector2I _resolve_extent_for_pass(PassResources& resources, Pass& pass, const FrameInfo& frame_info);
-    Slice<GPU::AttachmentInfo> _resolve_attachments_for_pass(Mem::Allocator* allocator, PassResources& resources,
+    Slice<GPU::AttachmentInfo> _resolve_attachments_for_pass(Mem::Allocator& allocator, PassResources& resources,
         Pass& pass, const FrameInfo& frame_info);
 
-    Slice<GPU::PipelineTextureBarrier> _resolve_begin_barriers_for_pass(Mem::Allocator* allocator, PassResources& resources, Pass& pass,
+    Slice<GPU::PipelineTextureBarrier> _resolve_begin_barriers_for_pass(Mem::Allocator& allocator, PassResources& resources, Pass& pass,
         const FrameInfo& frame_info);
-    Slice<GPU::PipelineTextureBarrier> _resolve_end_barriers_for_pass(Mem::Allocator* allocator, PassResources& resources, Pass& pass,
+    Slice<GPU::PipelineTextureBarrier> _resolve_end_barriers_for_pass(Mem::Allocator& allocator, PassResources& resources, Pass& pass,
         const FrameInfo& frame_info);
 
-    void _execute_pass(Mem::Allocator* allocator, GPU::CommandBufferID command_buffer, Pass& pass,
+    void _execute_pass(Mem::Allocator& allocator, GPU::CommandBufferID command_buffer, Pass& pass,
         PassResources& resources, const FrameInfo& frame_info);
 };
 

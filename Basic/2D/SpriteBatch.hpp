@@ -65,7 +65,7 @@ struct SpriteBatch
         End,
     };
     
-    Mem::Allocator* allocator;
+    Mem::Allocator& allocator;
 
     GPU::DescriptorSetLayoutID set_layout;
 
@@ -82,7 +82,7 @@ struct SpriteBatch
 
     GPU::SamplerID samplers[u32(SpriteFilter::MaxCount)];
     
-    SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format);
+    SpriteBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format);
     ~SpriteBatch();
 
     void begin(Mat4 projection);

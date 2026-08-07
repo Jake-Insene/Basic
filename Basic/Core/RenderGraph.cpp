@@ -6,7 +6,7 @@
 namespace Basic
 {
 
-PassBuilder::PassBuilder(Mem::Allocator* allocator) :
+PassBuilder::PassBuilder(Mem::Allocator& allocator) :
 data{
     .allocator = allocator,
     .writes = Array<PassWriteAttachment>::with_allocator(allocator),
@@ -41,7 +41,7 @@ void PassBuilder::clear()
     data.textures.clear();
 }
 
-RenderGraph::RenderGraph(Mem::Allocator* allocator, Graphics::RenderDevice* render_device) :
+RenderGraph::RenderGraph(Mem::Allocator& allocator, Graphics::RenderDevice* render_device) :
 data{
     .allocator = allocator,
     .render_device = render_device,
@@ -105,7 +105,7 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     context.syncronize_memory(command_buffer);
 
     data.tmp_allocator.reset();
-    Mem::Allocator* allocator = &data.tmp_allocator;
+    Mem::Allocator& allocator = data.tmp_allocator;
     
     Array resolved_render_targets = Array<GPU::TextureViewID>::with_size(
         data.allocator, data.virtual_render_targets.count);
@@ -191,10 +191,10 @@ Vector2I RenderGraph::_resolve_extent_for_pass(PassResources&, Pass& pass, const
     return extent;
 }
 
-Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(Mem::Allocator* allocator, 
+Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(Mem::Allocator& allocator, 
     PassResources& resources, Pass& pass, const FrameInfo& frame_info)
 {
-    Slice<GPU::AttachmentInfo> resolved_attachments = allocator->array<GPU::AttachmentInfo>(
+    Slice<GPU::AttachmentInfo> resolved_attachments = allocator.array<GPU::AttachmentInfo>(
         pass.writes.count);
 
     for(usize i = 0; i < pass.writes.count; i ++)
@@ -218,7 +218,7 @@ Slice<GPU::AttachmentInfo> RenderGraph::_resolve_attachments_for_pass(Mem::Alloc
     return resolved_attachments;
 }
 
-Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass(Mem::Allocator* allocator,
+Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass(Mem::Allocator& allocator,
     PassResources&, Pass& pass, const FrameInfo&)
 {
     // do not put barries for the backbuffer attachment
@@ -231,7 +231,7 @@ Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass
         }
         barrier_count++;
     }
-    Slice begin_barriers = allocator->array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
+    Slice begin_barriers = allocator.array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
 
     usize barrier_i = 0;
     for(const PassWriteAttachment& attachment : pass.writes.iter())
@@ -270,7 +270,7 @@ Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_begin_barriers_for_pass
     return begin_barriers.slice(barrier_i);
 }
 
-Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(Mem::Allocator* allocator,
+Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(Mem::Allocator& allocator,
     PassResources&, Pass& pass, const FrameInfo&)
 {
     // do not put barries for the backbuffer attachment
@@ -283,7 +283,7 @@ Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(M
         }
         barrier_count++;
     }
-    Slice end_barriers = allocator->array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
+    Slice end_barriers = allocator.array<GPU::PipelineTextureBarrier>(barrier_count + pass.textures.count);
 
     usize barrier_i = 0;
     for(const PassWriteAttachment& attachment : pass.writes.iter())
@@ -308,7 +308,7 @@ Slice<GPU::PipelineTextureBarrier> RenderGraph::_resolve_end_barriers_for_pass(M
     return end_barriers.slice(barrier_i);
 }
 
-void RenderGraph::_execute_pass(Mem::Allocator* allocator, GPU::CommandBufferID command_buffer,
+void RenderGraph::_execute_pass(Mem::Allocator& allocator, GPU::CommandBufferID command_buffer,
     Pass& pass, PassResources& resources, const FrameInfo& frame_info)
 {
     Vector2I offset = Vector2I();

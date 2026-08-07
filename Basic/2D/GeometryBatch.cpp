@@ -7,7 +7,7 @@
 namespace Basic
 {
 
-GeometryBatch::GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format)
+GeometryBatch::GeometryBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format)
 : allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
 {

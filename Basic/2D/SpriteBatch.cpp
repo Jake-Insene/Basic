@@ -7,7 +7,7 @@
 namespace Basic
 {
 
-SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format)
+SpriteBatch::SpriteBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format)
 : allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_texture_view(GPU::TextureViewID::invalid()), current_filter(SpriteFilter::MaxCount),
 state(RecordingState::End)

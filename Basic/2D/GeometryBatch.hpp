@@ -49,7 +49,7 @@ struct GeometryBatch
         End,
     };
 
-    Mem::Allocator* allocator;
+    Mem::Allocator& allocator;
 
     GPU::PipelineLayoutID line_pipeline_layout;
     GPU::PipelineID line_pipeline;
@@ -68,7 +68,7 @@ struct GeometryBatch
     * @param allocator Batcher allocator.
     * @param render_attachment_format Use to create the pipelines. This usually doesn't change often.
     */
-    GeometryBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format);
+    GeometryBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format);
     ~GeometryBatch();
 
     void begin(Mat4 projection);

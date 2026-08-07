@@ -15,7 +15,7 @@ namespace Basic
 struct RendererCreateInfo
 {
     // Renderer allocator.
-    Mem::Allocator* allocator;
+    Mem::Allocator& allocator;
     // The Render Device to use.
     Graphics::RenderDevice* render_device;
     // The Swap Chain containing the image to render to.
@@ -36,7 +36,7 @@ struct Renderer
         GPU::FenceID in_flight_fence;
     };
 
-    Mem::Allocator* allocator;
+    Mem::Allocator& allocator;
     Graphics::RenderDevice* render_device;
     Graphics::SwapChain* swap_chain;
 
