@@ -16,10 +16,7 @@ data{
 }
 
 PassBuilder::~PassBuilder()
-{
-    data.writes.destroy();
-    data.textures.destroy();
-}
+{}
 
 PassBuilder& PassBuilder::write_render_attachment(RenderTargetHandle rt, GPU::LoadOp load_op,
     GPU::StoreOp store_op, GPU::ClearValue clear_value)
@@ -51,20 +48,15 @@ data{
     .frame_context = {render_device, render_device, render_device},
     .passes = Array<Pass>::with_size(allocator, 4),
     .virtual_render_targets = Array<VirtualRenderTarget>::with_allocator(allocator),
-    .tmp_allocator = {},
+    .tmp_allocator = Mem::StackAllocator(OS::map_memory(MiB(1), OS::MapAccess::ReadWrite)),
 }
-{
-    data.tmp_allocator.init(OS::map_memory(MiB(1), OS::MapAccess::ReadWrite));
-}
+{}
 
 RenderGraph::~RenderGraph()
 {
     OS::unmap_memory(data.tmp_allocator.sp);
 
     clear();
-    
-    data.passes.destroy();
-    data.virtual_render_targets.destroy();
 }
 
 FrameContext& RenderGraph::get_frame_context(const FrameInfo& frame_info)
@@ -91,14 +83,6 @@ RenderTargetHandle RenderGraph::import_render_target(GPU::TextureID texture, GPU
 
 void RenderGraph::clear()
 {
-    for(Pass& pass : data.passes.iter())
-    {
-        pass.writes.destroy();
-        pass.textures.destroy();
-        pass.setup.destroy();
-        pass.execute.destroy();
-    }
-
     data.passes.clear();
     data.virtual_render_targets.clear();
 }
@@ -144,8 +128,6 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     {
         _execute_pass(allocator, command_buffer, pass, resources, frame_info);
     }
-
-    resolved_render_targets.destroy();
 
     _end_backbuffer(command_buffer, frame_info);
 }

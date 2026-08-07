@@ -8,9 +8,10 @@ namespace Basic
 {
 
 SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_attachment_format)
+: allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
+current_texture_view(GPU::TextureViewID::invalid()), current_filter(SpriteFilter::MaxCount),
+state(RecordingState::End)
 {
-    data.allocator = allocator;
-
     const GPU::ConstantBlock blocks[] =
     {
         GPU::ConstantBlock::create(GPU::ShaderStage::Vertex, 0, sizeof(BatchBlock)),
@@ -21,17 +22,17 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
         GPU::DescriptorBinding::combined_texture_sampler(0, 1, GPU::ShaderStage::Fragment),
     };
 
-    data.set_layout = GPU::descriptor_set_layout_create(Engine::get_render_device()->get_device(),
+    set_layout = GPU::descriptor_set_layout_create(Engine::get_render_device()->get_device(),
         GPU::DescriptorSetLayoutCreateInfo::create(set_bindings));
 
-    Graphics::Shader sprite_shader = {};
-    sprite_shader.init(allocator,
+    Graphics::Shader sprite_shader{
+        allocator,
         {
             .file_path = "shaders/packages/2D/SpriteBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }
-    );
+    };
 
     { // Sprite
         const GPU::VertexBinding vertex_bindings[] =
@@ -45,8 +46,8 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
             GPU::VertexAttribute::create(1, 0, GPU::VertexFormat::RGBA32Float, sizeof(Vector4)),
         };
 
-        data.pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
-            GPU::PipelineLayoutCreateInfo::create(blocks, Slice(&data.set_layout, 1))
+        pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
+            GPU::PipelineLayoutCreateInfo::create(blocks, Slice(&set_layout, 1))
         );
 
         const GPU::ColorBlendAttachmentState color_blend_attachments[] =
@@ -58,7 +59,7 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
             ),
         };
 
-        data.pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
+        pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
                 sprite_shader.get_stages(),
@@ -68,18 +69,10 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
                 GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
-                data.pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
+                pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
             )
         );
     }
-
-    sprite_shader.destroy();
-
-    data.vertices = Array<Vertex>::with_size(allocator, 4);
-    data.batches = Array<Batch>::with_size(allocator, 4);
-    data.current_texture_view = GPU::TextureViewID::invalid();
-    data.current_filter = SpriteFilter::MaxCount;
-    data.state = RecordingState::End;
 
     static constexpr GPU::Filter gpu_filters[] =
     {
@@ -95,7 +88,7 @@ SpriteBatch::SpriteBatch(Mem::Allocator* allocator, GPU::TextureFormat render_at
 
     for(usize i = 0; i < u32(SpriteFilter::MaxCount); i++)
     {
-        data.samplers[i] = GPU::sampler_create(Engine::get_render_device()->get_device(),
+        samplers[i] = GPU::sampler_create(Engine::get_render_device()->get_device(),
             GPU::SamplerCreateInfo::create(gpu_filters[i], gpu_filters[i],
                 gpu_mimap_modes[i], GPU::SamplerAddressMode::Repeat, GPU::SamplerAddressMode::Repeat,
                 GPU::SamplerAddressMode::Repeat, 0.F, false, 1.F, false, GPU::CompareOp::Always,
@@ -107,28 +100,25 @@ SpriteBatch::~SpriteBatch()
 {
     for(usize i = 0; i < u32(SpriteFilter::MaxCount); i++)
     {
-        GPU::sampler_destroy(data.samplers[i]);
+        GPU::sampler_destroy(samplers[i]);
     }
 
-    GPU::pipeline_destroy(data.pipeline);
-    GPU::pipeline_layout_destroy(data.pipeline_layout);
-    GPU::descriptor_set_layout_destroy(data.set_layout);
-
-    data.vertices.destroy();
-    data.batches.destroy();
+    GPU::pipeline_destroy(pipeline);
+    GPU::pipeline_layout_destroy(pipeline_layout);
+    GPU::descriptor_set_layout_destroy(set_layout);
 }
 
 void SpriteBatch::begin(Mat4 projection)
 {
-    DebugAssert(data.state == RecordingState::End, "batcher is still open");
+    DebugAssert(state == RecordingState::End, "batcher is still open");
 
-    data.vertices.clear();
-    data.batches.clear();
-    data.current_texture_view = GPU::TextureViewID::invalid();
-    data.current_filter = SpriteFilter::MaxCount;
-    data.state = RecordingState::Begin;
+    vertices.clear();
+    batches.clear();
+    current_texture_view = GPU::TextureViewID::invalid();
+    current_filter = SpriteFilter::MaxCount;
+    state = RecordingState::Begin;
 
-    data.block =
+    block =
     {
         .projection = projection,
     };
@@ -136,20 +126,20 @@ void SpriteBatch::begin(Mat4 projection)
 
 void SpriteBatch::end()
 {
-    DebugAssert(data.state == RecordingState::Begin, "batcher is already end");
-    data.state = RecordingState::End;
+    DebugAssert(state == RecordingState::Begin, "batcher is already end");
+    state = RecordingState::End;
 }
 
 void SpriteBatch::draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const Vertex& v3,
     GPU::TextureViewID texture_view, SpriteFilter filter)
 {
-    DebugAssert(data.state == RecordingState::Begin, "batcher is not open");
+    DebugAssert(state == RecordingState::Begin, "batcher is not open");
     _bind_to_batch(texture_view, filter);
 
-    (void)data.vertices.add(v1);
-    (void)data.vertices.add(v2);
-    (void)data.vertices.add(v3);
-    data.batches.last().vertex_count += 3;
+    (void)vertices.add(v1);
+    (void)vertices.add(v2);
+    (void)vertices.add(v3);
+    batches.last().vertex_count += 3;
 }
 
 void SpriteBatch::draw_texture_gpu_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
@@ -188,7 +178,7 @@ void SpriteBatch::draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const 
         texture = Resource::load<Texture2D>("default:white_texture");
     }
 
-    GPU::TextureViewID texture_view = Engine::get_render_device()->get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
+    GPU::TextureViewID texture_view = Engine::get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
     draw_texture_gpu_transformed(rect, Transform2D(), uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
 }
 
@@ -200,18 +190,18 @@ void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D
         texture = Resource::load<Texture2D>("default:white_texture");
     }
 
-    GPU::TextureViewID texture_view = Engine::get_render_device()->get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
+    GPU::TextureViewID texture_view = Engine::get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
     draw_texture_gpu_transformed(rect, transform, uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
 }
 
 Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const
 {
-    return data.batches.slice();
+    return batches.slice();
 }
 
 Slice<SpriteBatch::Vertex> SpriteBatch::get_vertices() const
 {
-    return data.vertices.slice();
+    return vertices.slice();
 }
 
 void SpriteBatch::_bind_to_batch(GPU::TextureViewID texture_view, SpriteFilter filter)
@@ -219,31 +209,31 @@ void SpriteBatch::_bind_to_batch(GPU::TextureViewID texture_view, SpriteFilter f
     DebugAssert(texture_view != GPU::TextureViewID::invalid(), "invalid texture view");
     DebugAssert(filter != SpriteFilter::MaxCount, "invalid filter");
 
-    if(data.current_texture_view == texture_view && data.current_filter == filter)
+    if(current_texture_view == texture_view && current_filter == filter)
     {
         return;
     }
 
     Batch new_batch =
     {
-        .pipeline = data.pipeline,
-        .set_layout = data.set_layout,
-        .pipeline_layout = data.pipeline_layout,
-        .block = data.block,
-        .vb_offset = data.vertices.count,
+        .pipeline = pipeline,
+        .set_layout = set_layout,
+        .pipeline_layout = pipeline_layout,
+        .block = block,
+        .vb_offset = vertices.count,
         .vertex_count = 0,
         .texture =
         {
             .texture_view = texture_view,
             .layout = GPU::TextureLayout::ShaderReadOnly,
-            .sampler = data.samplers[u32(filter)],
+            .sampler = samplers[u32(filter)],
         },
     };
 
-    data.current_texture_view = texture_view;
-    data.current_filter = filter;
+    current_texture_view = texture_view;
+    current_filter = filter;
 
-    (void)data.batches.add(new_batch);
+    (void)batches.add(new_batch);
 }
 
 }

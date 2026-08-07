@@ -76,6 +76,11 @@ struct RenderGraph
         Array<PassTexture> textures;
         Delegate<void(PassBuilder&)> setup;
         Delegate<void(PassResources&)> execute;
+
+        Pass(Mem::Allocator* allocator)
+        : writes(allocator, 4, {}), textures(allocator, 4, {}),
+        setup(allocator), execute(allocator)
+        {}
     };
 
     struct VirtualRenderTarget
@@ -112,15 +117,7 @@ struct RenderGraph
     template<typename SetupFn, typename ExecuteFn>
     void add_raster_pass(SetupFn setup, ExecuteFn execute)
     {
-        Pass& pass = data.passes.add(
-            Pass
-            {
-                .writes = Array<PassWriteAttachment>::with_allocator(data.allocator),
-                .textures = Array<PassTexture>::with_allocator(data.allocator),
-                .setup = Delegate<void(PassBuilder&)>::create(data.allocator),
-                .execute = Delegate<void(PassResources&)>::create(data.allocator)
-            }
-        );
+        Pass& pass = data.passes.emplace(data.allocator);
         pass.setup.bind([setup](PassBuilder& builder){ setup(builder); });
         pass.execute.bind([execute](PassResources& resources){ execute(resources); });
     }

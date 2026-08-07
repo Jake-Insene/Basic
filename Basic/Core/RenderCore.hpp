@@ -1,6 +1,7 @@
 #pragma once
 #include "gpu/gpu.h"
 #include "graphics/render_device.h"
+#include "graphics/gpu_memory_allocator_types.h"
 
 
 namespace Basic

@@ -49,23 +49,20 @@ struct GeometryBatch
         End,
     };
 
-    struct InternalData
-    {
-        Mem::Allocator* allocator;
+    Mem::Allocator* allocator;
 
-        GPU::PipelineLayoutID line_pipeline_layout;
-        GPU::PipelineID line_pipeline;
+    GPU::PipelineLayoutID line_pipeline_layout;
+    GPU::PipelineID line_pipeline;
 
-        GPU::PipelineLayoutID triangle_pipeline_layout;
-        GPU::PipelineID triangle_pipeline;
+    GPU::PipelineLayoutID triangle_pipeline_layout;
+    GPU::PipelineID triangle_pipeline;
 
-        Array<Vertex> vertices;
-        Array<Batch> batches;
-        GPU::PrimitiveTopology current_topology;
+    Array<Vertex> vertices;
+    Array<Batch> batches;
+    GPU::PrimitiveTopology current_topology;
 
-        BatchBlock block;
-        RecordingState state;
-    } data;
+    BatchBlock block;
+    RecordingState state;
 
     /**
     * @param allocator Batcher allocator.

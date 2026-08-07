@@ -23,15 +23,15 @@ RenderTarget::RenderTarget(GPU::TextureFormat render_target_format, const Vector
             )
         );
 
-        data.allocations[i] = Engine::get_render_device()->get_gpu_memory_allocator()->allocate(
+        data.allocations[i] = Engine::get_gpu_memory_allocator()->allocate(
             Graphics::GPUMemoryAllocator::AllocationTag::Texture,
             GPU::texture_get_memory_requirements(data.textures[i])
         );
 
         GPU::texture_bind_memory_heap(data.textures[i],
             GPU::BindMemoryInfo::create(
-                Engine::get_render_device()->get_gpu_memory_allocator()->allocation_get_heap(data.allocations[i]),
-                Engine::get_render_device()->get_gpu_memory_allocator()->allocation_get_offset(data.allocations[i])
+                Engine::get_gpu_memory_allocator()->allocation_get_heap(data.allocations[i]),
+                Engine::get_gpu_memory_allocator()->allocation_get_offset(data.allocations[i])
             )
         );
 
@@ -56,7 +56,7 @@ RenderTarget::~RenderTarget()
     {
         GPU::texture_view_destroy(get_texture_view(i));
      
-        Engine::get_render_device()->get_gpu_memory_allocator()->free(data.allocations[i]);
+        Engine::get_gpu_memory_allocator()->free(data.allocations[i]);
         GPU::texture_destroy(get_texture(i));
     }
 }
