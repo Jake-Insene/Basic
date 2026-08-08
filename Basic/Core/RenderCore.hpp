@@ -68,7 +68,7 @@ struct FrameContext
     DisableCopy(FrameContext);
     DisableMove(FrameContext);
 
-    static constexpr usize InitialTransientSize = MiB(16);
+    static constexpr usize InitialTransientSize = Core::MiB(16);
     // For now this shouldn't happen.
     static constexpr u32 MaxSets = 1024;
     static constexpr u32 MaxUniformBuffers = 1024;

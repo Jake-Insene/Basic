@@ -55,7 +55,7 @@ FrameInfo Renderer::begin_frame()
 
     if(frame.in_flight_fence != GPU::FenceID::invalid())
     {
-        GPU::fence_wait_for(Slice(&frame.in_flight_fence, 1), true, MaxValue<u64>);
+        GPU::fence_wait_for(Slice(&frame.in_flight_fence, 1), true, Core::MaxValue<u64>);
     }
 
     // Acquiring image
@@ -64,7 +64,7 @@ FrameInfo Renderer::begin_frame()
         GPU::PipelineStages::RenderOutput,
     };
 
-    u32 image_index = MaxValue<u32>;
+    u32 image_index = Core::MaxValue<u32>;
     bool image_acquired = swap_chain->acquire_image(
         &image_index,
         frame.present_complete_semaphore
@@ -78,7 +78,7 @@ FrameInfo Renderer::begin_frame()
     FrameFlags frame_flags = FrameFlags();
     GPU::TextureID image = GPU::TextureID::invalid();
     GPU::TextureViewID image_view = GPU::TextureViewID::invalid();
-    if(image_index == MaxValue<u32> && image_acquired)
+    if(image_index == Core::MaxValue<u32> && image_acquired)
     {
         frame.in_flight_fence = command_pool.execute_empty(
             render_device->get_graphics_queue(),
@@ -89,7 +89,7 @@ FrameInfo Renderer::begin_frame()
             }
         );
     }
-    else if(image_acquired && image_index != MaxValue<u32>)
+    else if(image_acquired && image_index != Core::MaxValue<u32>)
     {
         frame_flags |= FrameFlags::Acquired;
         image = swap_chain->get_image(image_index).image;    

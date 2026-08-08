@@ -48,7 +48,7 @@ data{
     .frame_context = {render_device, render_device, render_device},
     .passes = Array<Pass>::with_size(allocator, 4),
     .virtual_render_targets = Array<VirtualRenderTarget>::with_allocator(allocator),
-    .tmp_allocator = Mem::StackAllocator(OS::map_memory(MiB(1), OS::MapAccess::ReadWrite)),
+    .tmp_allocator = Mem::StackAllocator(OS::map_memory(Core::MiB(1), OS::MapAccess::ReadWrite)),
 }
 {}
 
