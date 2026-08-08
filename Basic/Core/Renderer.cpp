@@ -19,7 +19,7 @@ render_finished_semaphores(info.allocator, info.swap_chain->get_image_count(), {
 {
     frame_index = 0;
 
-    ConstructObject(frames);
+    Core::Mem::Placement(frames);
     for(RenderFrame& frame : frames)
     {
         frame.present_complete_semaphore = GPU::semaphore_create(render_device->get_device(), {}),
