@@ -18,7 +18,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
 
     Graphics::Shader primitive_shader{allocator,
         {
-            .file_path = "shaders/packages/2D/GeometryBatch.slang.spirv",
+            .path = "shaders/packages/2D/GeometryBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }

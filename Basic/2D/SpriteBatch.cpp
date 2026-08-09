@@ -28,7 +28,7 @@ state(RecordingState::End)
     Graphics::Shader sprite_shader{
         allocator,
         {
-            .file_path = "shaders/packages/2D/SpriteBatch.slang.spirv",
+            .path = "shaders/packages/2D/SpriteBatch.slang.spirv",
             .vertex_name = "VertexMain",
             .fragment_name = "FragmentMain",
         }
