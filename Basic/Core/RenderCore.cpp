@@ -103,9 +103,14 @@ TransientAllocation FrameContext::allocate_transient_vertex(usize size)
 GPU::DescriptorSetID FrameContext::allocate_descriptor_set(GPU::DescriptorSetLayoutID set_layout)
 {
     GPU::DescriptorSetID set = GPU::DescriptorSetID::invalid();
+
+    const GPU::DescriptorSetLayoutID allocate_set_layouts[] =
+    {
+        set_layout
+    };
     
     GPU::descriptor_set_allocate(data.render_device->get_device(),
-        GPU::DescriptorSetAllocateInfo::create(data.pool, Slice(&set_layout, 1)),
+        GPU::DescriptorSetAllocateInfo::create(data.pool, allocate_set_layouts),
         Slice(&set, 1));
 
     return set;

@@ -48,6 +48,11 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             GPU::PipelineLayoutCreateInfo::create(shared_blocks, {})
         );
 
+        const GPU::TextureFormat pipeline_render_attachments[] =
+        {
+            render_attachment_format,
+        };
+
         line_pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
@@ -58,7 +63,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
                 GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
-                line_pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
+                line_pipeline_layout, GPU::RenderingInfo::render_attachments(pipeline_render_attachments)
             )
         );
     }
@@ -78,6 +83,11 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             GPU::PipelineLayoutCreateInfo::create(shared_blocks, {})
         );
 
+        const GPU::TextureFormat pipeline_render_attachments[] =
+        {
+            render_attachment_format,
+        };
+
         triangle_pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
@@ -88,7 +98,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
                 GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
-                triangle_pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
+                triangle_pipeline_layout, GPU::RenderingInfo::render_attachments(pipeline_render_attachments)
             )
         );
     }
@@ -191,12 +201,12 @@ void GeometryBatch::draw_fill_rectangle_transformed(const Rect2D& rect, const Tr
 
 Slice<const GeometryBatch::Batch> GeometryBatch::get_batches() const
 {
-    return batches.slice();
+    return batches.slice().as_const();
 }
 
 Slice<const GeometryBatch::Vertex> GeometryBatch::get_vertices() const
 {
-    return vertices.slice();
+    return vertices.slice().as_const();
 }
 
 void GeometryBatch::_try_begin_new_batch(GPU::PrimitiveTopology topology)

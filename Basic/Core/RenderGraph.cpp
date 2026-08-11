@@ -314,15 +314,15 @@ void RenderGraph::_execute_pass(Mem::Allocator& allocator, GPU::CommandBufferID 
     Vector2I offset = Vector2I();
     Vector2I extent = _resolve_extent_for_pass(resources, pass, frame_info);
 
-    Slice resolved_attachments = _resolve_attachments_for_pass(allocator, resources, pass, frame_info);
-    Slice begin_barriers = _resolve_begin_barriers_for_pass(allocator, resources, pass, frame_info);
-    Slice end_barriers = _resolve_end_barriers_for_pass(allocator, resources, pass, frame_info);
+    const Slice resolved_attachments = _resolve_attachments_for_pass(allocator, resources, pass, frame_info);
+    const Slice begin_barriers = _resolve_begin_barriers_for_pass(allocator, resources, pass, frame_info);
+    const Slice end_barriers = _resolve_end_barriers_for_pass(allocator, resources, pass, frame_info);
 
     GPU::command_buffer_pipeline_barrier(command_buffer,
         GPU::PipelineBarrier::texture_barrier(
             GPU::PipelineStages::RenderOutput,
             GPU::PipelineStages::RenderOutput,
-            begin_barriers
+            begin_barriers.as_const()
         )
     );
     
@@ -331,14 +331,14 @@ void RenderGraph::_execute_pass(Mem::Allocator& allocator, GPU::CommandBufferID 
         {
             .offset = offset,
             .extent = Vector3U(extent.x, extent.y, 1),
-            .render_attachments = resolved_attachments,
+            .render_attachments = resolved_attachments.as_const(),
             .depth_attachment = {},
             .stencil_attachment = {},
         }
     );
 
-    GPU::Viewport viewport = GPU::Viewport::extent(extent.x, extent.y);
-    GPU::Scissor scissor = GPU::Scissor::extent(extent.x, extent.y);
+    const GPU::Viewport viewport = GPU::Viewport::extent(extent.x, extent.y);
+    const GPU::Scissor scissor = GPU::Scissor::extent(extent.x, extent.y);
 
     GPU::command_buffer_set_viewports(command_buffer, 0, Slice(&viewport, 1));
     GPU::command_buffer_set_scissors(command_buffer, 0, Slice(&scissor, 1));
@@ -350,7 +350,7 @@ void RenderGraph::_execute_pass(Mem::Allocator& allocator, GPU::CommandBufferID 
         GPU::PipelineBarrier::texture_barrier(
             GPU::PipelineStages::RenderOutput,
             GPU::PipelineStages::RenderOutput,
-            end_barriers
+            end_barriers.as_const()
         )
     );
 }

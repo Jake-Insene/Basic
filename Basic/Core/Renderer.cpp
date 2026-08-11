@@ -80,10 +80,11 @@ FrameInfo Renderer::begin_frame()
     GPU::TextureViewID image_view = GPU::TextureViewID::invalid();
     if(image_index == Core::MaxValue<u32> && image_acquired)
     {
+        const GPU::SemaphoreID present_complete_semaphore = frame.present_complete_semaphore;
         frame.in_flight_fence = command_pool.execute_empty(
             render_device->get_graphics_queue(),
             {
-                .wait_semaphores = Slice(&frame.present_complete_semaphore, 1),
+                .wait_semaphores = Slice(&present_complete_semaphore, 1),
                 .wait_stages = wait_stages,
                 .signal_semaphores = {},
             }
@@ -121,22 +122,27 @@ void Renderer::submit_command_buffer(const FrameInfo& frame_info, const Slice<co
     GPU::CommandBufferID command_buffer)
 {
     RenderFrame& frame = frames[frame_info.frame_index];
+
+    const GPU::SemaphoreID present_complete_semaphore = frame.present_complete_semaphore;
+    const GPU::SemaphoreID render_finished_semaphore = render_finished_semaphores.get(frame_info.frame_index);
+
     frame.in_flight_fence = command_pool.execute(
         render_device->get_graphics_queue(),
         {
-            .wait_semaphores = Slice(&frame.present_complete_semaphore, 1),
+            .wait_semaphores = Slice(&present_complete_semaphore, 1),
             .wait_stages = wait_stages,
             .command_buffer = command_buffer,
-            .signal_semaphores = Slice(&render_finished_semaphores.get(frame_info.image_index), 1),
+            .signal_semaphores = Slice(&render_finished_semaphore, 1),
         }
     );
 }
 
 void Renderer::present(const FrameInfo& frame_info)
 {
+    const GPU::SemaphoreID render_finished_semaphore = render_finished_semaphores.get(frame_info.frame_index);
     swap_chain->present(
         frame_info.image_index,
-        Slice(&render_finished_semaphores.get(frame_info.image_index), 1)
+        Slice(&render_finished_semaphore, 1)
     );
 }
 

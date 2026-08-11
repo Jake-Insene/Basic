@@ -46,8 +46,12 @@ state(RecordingState::End)
             GPU::VertexAttribute::create(1, 0, GPU::VertexFormat::RGBA32Float, sizeof(Vector4)),
         };
 
+        const GPU::DescriptorSetLayoutID pipeline_set_layouts[] =
+        {
+            set_layout
+        };
         pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
-            GPU::PipelineLayoutCreateInfo::create(blocks, Slice(&set_layout, 1))
+            GPU::PipelineLayoutCreateInfo::create(blocks, pipeline_set_layouts)
         );
 
         const GPU::ColorBlendAttachmentState color_blend_attachments[] =
@@ -57,6 +61,11 @@ state(RecordingState::End)
                 GPU::BlendFactor::One, GPU::BlendFactor::OneMinusSrcAlpha, GPU::BlendOp::Add,
                 GPU::ColorComponentFlags(0xFF)
             ),
+        };
+
+        const GPU::TextureFormat pipeline_render_attachments[] =
+        {
+            render_attachment_format,
         };
 
         pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
@@ -69,7 +78,7 @@ state(RecordingState::End)
                 GPU::MultisampleState::disable(),
                 GPU::DepthStencilState::depth_stencil_disable(),
                 GPU::ColorBlendState::create(false, GPU::LogicOp::Copy, color_blend_attachments, Vector4()),
-                pipeline_layout, GPU::RenderingInfo::render_attachments(Slice(&render_attachment_format, 1))
+                pipeline_layout, GPU::RenderingInfo::render_attachments(pipeline_render_attachments)
             )
         );
     }
