@@ -74,8 +74,8 @@ struct RenderGraph
     {
         Collections::Array<PassWriteAttachment> writes;
         Collections::Array<PassTexture> textures;
-        Delegate<void(PassBuilder&)> setup;
-        Delegate<void(PassResources&)> execute;
+        Collections::Delegate<void(PassBuilder&)> setup;
+        Collections::Delegate<void(PassResources&)> execute;
 
         Pass(Mem::Allocator& allocator)
         : writes(allocator, 4, {}), textures(allocator, 4, {}),
