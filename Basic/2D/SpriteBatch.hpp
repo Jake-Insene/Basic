@@ -1,5 +1,5 @@
 #pragma once
-#include <collections/array.h>
+#include <Collections/Array.hpp>
 #include <math/color.h>
 #include <math/vec2.h>
 #include <math/mat4.h>
@@ -72,8 +72,8 @@ struct SpriteBatch
     GPU::PipelineLayoutID pipeline_layout;
     GPU::PipelineID pipeline;
 
-    Array<Vertex> vertices;
-    Array<Batch> batches;
+    Collections::Array<Vertex> vertices;
+    Collections::Array<Batch> batches;
     GPU::TextureViewID current_texture_view;
     SpriteFilter current_filter;
 

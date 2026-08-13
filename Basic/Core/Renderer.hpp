@@ -44,7 +44,7 @@ struct Renderer
     u32 frame_index;
         
     RenderFrame frames[MaxFramesInFlight];
-    Array<GPU::SemaphoreID> render_finished_semaphores;
+    Collections::Array<GPU::SemaphoreID> render_finished_semaphores;
 
     Renderer(const RendererCreateInfo& info);
     ~Renderer();

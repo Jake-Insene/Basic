@@ -212,7 +212,7 @@ Slice<const GeometryBatch::Vertex> GeometryBatch::get_vertices() const
 void GeometryBatch::_try_begin_new_batch(GPU::PrimitiveTopology topology)
 {
     DebugAssert(state == RecordingState::Begin, "batcher is not open");
-    if(current_topology != topology || batches.is_empty())
+    if(current_topology != topology || batches.empty())
     {
         _set_topology(topology);
     }

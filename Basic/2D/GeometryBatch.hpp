@@ -1,5 +1,5 @@
 #pragma once
-#include <collections/array.h>
+#include <Collections/Array.hpp>
 #include <gpu/gpu.h>
 #include <math/color.h>
 #include <math/vec2.h>
@@ -57,8 +57,8 @@ struct GeometryBatch
     GPU::PipelineLayoutID triangle_pipeline_layout;
     GPU::PipelineID triangle_pipeline;
 
-    Array<Vertex> vertices;
-    Array<Batch> batches;
+    Collections::Array<Vertex> vertices;
+    Collections::Array<Batch> batches;
     GPU::PrimitiveTopology current_topology;
 
     BatchBlock block;

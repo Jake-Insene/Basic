@@ -1,8 +1,8 @@
 #pragma once
-#include <collections/array.h>
-#include <collections/delegate.h>
+#include <Collections/Array.hpp>
+#include <Collections/Delegate.hpp>
 #include <graphics/render_device.h>
-#include <mem/stack_allocator.h>
+#include <Mem/LinearAllocator.hpp>
 
 #include "Basic/Core/RenderCore.hpp"
 
@@ -50,8 +50,8 @@ struct PassBuilder
     struct InternalData
     {
         Mem::Allocator& allocator;
-        Array<PassWriteAttachment> writes;
-        Array<PassTexture> textures;
+        Collections::Array<PassWriteAttachment> writes;
+        Collections::Array<PassTexture> textures;
     } data;
 
     PassBuilder(Mem::Allocator& allocator);
@@ -72,8 +72,8 @@ struct RenderGraph
 
     struct Pass
     {
-        Array<PassWriteAttachment> writes;
-        Array<PassTexture> textures;
+        Collections::Array<PassWriteAttachment> writes;
+        Collections::Array<PassTexture> textures;
         Delegate<void(PassBuilder&)> setup;
         Delegate<void(PassResources&)> execute;
 
@@ -100,10 +100,10 @@ struct RenderGraph
 
         FrameContext frame_context[MaxFramesInFlight];
 
-        Array<Pass> passes;
-        Array<VirtualRenderTarget> virtual_render_targets;
+        Collections::Array<Pass> passes;
+        Collections::Array<VirtualRenderTarget> virtual_render_targets;
 
-        Mem::StackAllocator tmp_allocator;
+        Mem::LinearAllocator tmp_allocator;
     } data;
 
     RenderGraph(Mem::Allocator& allocator, Graphics::RenderDevice* render_device);

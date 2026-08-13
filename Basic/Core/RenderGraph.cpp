@@ -9,8 +9,8 @@ namespace Basic
 PassBuilder::PassBuilder(Mem::Allocator& allocator) :
 data{
     .allocator = allocator,
-    .writes = Array<PassWriteAttachment>::with_allocator(allocator),
-    .textures = Array<PassTexture>::with_allocator(allocator),
+    .writes = Collections::Array<PassWriteAttachment>(allocator, 4, {}),
+    .textures = Collections::Array<PassTexture>(allocator, 4, {}),
 }
 {
 }
@@ -46,9 +46,9 @@ data{
     .allocator = allocator,
     .render_device = render_device,
     .frame_context = {render_device, render_device, render_device},
-    .passes = Array<Pass>::with_size(allocator, 4),
-    .virtual_render_targets = Array<VirtualRenderTarget>::with_allocator(allocator),
-    .tmp_allocator = Mem::StackAllocator(OS::map_memory(Core::MiB(1), OS::MapAccess::ReadWrite)),
+    .passes = Collections::Array<Pass>(allocator, 4, {}),
+    .virtual_render_targets = Collections::Array<VirtualRenderTarget>(allocator, 0, {}),
+    .tmp_allocator = Mem::LinearAllocator(OS::map_memory(Core::MiB(1), OS::MapAccess::ReadWrite)),
 }
 {}
 
@@ -107,8 +107,8 @@ void RenderGraph::execute(GPU::CommandBufferID command_buffer, const FrameInfo& 
     data.tmp_allocator.reset();
     Mem::Allocator& allocator = data.tmp_allocator;
     
-    Array resolved_render_targets = Array<GPU::TextureViewID>::with_size(
-        data.allocator, data.virtual_render_targets.count);
+    Collections::Array resolved_render_targets = Collections::Array<GPU::TextureViewID>(
+        data.allocator, data.virtual_render_targets.count, {});
     for(VirtualRenderTarget& vrt : data.virtual_render_targets.iter())
     {
         (void)resolved_render_targets.add(vrt.texture_view);
