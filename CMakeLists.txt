@@ -28,12 +28,12 @@ bread_package(
 
         "Basic/Memory/GenericGPUMemoryAllocator.cpp"
 
-        "Basic/Resource/font.cpp"
-        "Basic/Resource/image.cpp"
-        "Basic/Resource/resource.cpp"
-        "Basic/Resource/resource_manager.cpp"
-        "Basic/Resource/sound.cpp"
-        "Basic/Resource/texture.cpp"
+        "Basic/Resource/Font.cpp"
+        "Basic/Resource/Image.cpp"
+        "Basic/Resource/Resource.cpp"
+        "Basic/Resource/ResourceManager.cpp"
+        "Basic/Resource/Sound.cpp"
+        "Basic/Resource/Texture.cpp"
 
         ${EXTERNAL_SRC}
 )
