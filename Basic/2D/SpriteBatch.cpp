@@ -1,13 +1,12 @@
 #include "Basic/2D/SpriteBatch.hpp"
 
-#include <engine/engine.h>
-#include <graphics/shader.h>
+#include "Basic/Core/Shader.hpp"
 
 
 namespace Basic
 {
 
-SpriteBatch::SpriteBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format)
+SpriteBatch::SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device, GPU::TextureFormat render_attachment_format)
 : allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_texture_view(GPU::TextureViewID::invalid()), current_filter(SpriteFilter::MaxCount),
 state(RecordingState::End)
@@ -22,10 +21,10 @@ state(RecordingState::End)
         GPU::DescriptorBinding::combined_texture_sampler(0, 1, GPU::ShaderStage::Fragment),
     };
 
-    set_layout = GPU::descriptor_set_layout_create(Engine::get_render_device()->get_device(),
+    set_layout = GPU::descriptor_set_layout_create(render_device.get_device(),
         GPU::DescriptorSetLayoutCreateInfo::create(set_bindings));
 
-    Graphics::Shader sprite_shader{
+    Basic::Shader sprite_shader{
         allocator,
         {
             .path = "shaders/packages/2D/SpriteBatch.slang.spirv",
@@ -50,7 +49,7 @@ state(RecordingState::End)
         {
             set_layout
         };
-        pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
+        pipeline_layout = GPU::pipeline_layout_create(render_device.get_device(),
             GPU::PipelineLayoutCreateInfo::create(blocks, pipeline_set_layouts)
         );
 
@@ -68,7 +67,7 @@ state(RecordingState::End)
             render_attachment_format,
         };
 
-        pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
+        pipeline = GPU::pipeline_create(render_device.get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
                 sprite_shader.get_stages(),
@@ -97,7 +96,7 @@ state(RecordingState::End)
 
     for(usize i = 0; i < u32(SpriteFilter::MaxCount); i++)
     {
-        samplers[i] = GPU::sampler_create(Engine::get_render_device()->get_device(),
+        samplers[i] = GPU::sampler_create(render_device.get_device(),
             GPU::SamplerCreateInfo::create(gpu_filters[i], gpu_filters[i],
                 gpu_mimap_modes[i], GPU::SamplerAddressMode::Repeat, GPU::SamplerAddressMode::Repeat,
                 GPU::SamplerAddressMode::Repeat, 0.F, false, 1.F, false, GPU::CompareOp::Always,
@@ -151,7 +150,7 @@ void SpriteBatch::draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const
     batches.last().vertex_count += 3;
 }
 
-void SpriteBatch::draw_texture_gpu_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
+void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
     const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter)
 {
     Rect2D normalized_uv = Rect2D(
@@ -177,30 +176,6 @@ void SpriteBatch::draw_texture_gpu_transformed(const Rect2D& rect, const Transfo
         {.position = transform * v2, .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0), .color = color, },
         texture_view, filter
     );
-}
-
-void SpriteBatch::draw_texture(const Rect2D& rect, const Rect2D& uv_rect, const Color& color,
-    Texture2D* texture, SpriteFilter filter)
-{
-    if(texture == nullptr)
-    {
-        texture = Resource::load<Texture2D>("default:white_texture");
-    }
-
-    GPU::TextureViewID texture_view = Engine::get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
-    draw_texture_gpu_transformed(rect, Transform2D(), uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
-}
-
-void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
-    const Color& color, Texture2D* texture, SpriteFilter filter)
-{
-        if(texture == nullptr)
-    {
-        texture = Resource::load<Texture2D>("default:white_texture");
-    }
-
-    GPU::TextureViewID texture_view = Engine::get_gpu_resource_manager()->texture_get_texture_view(texture->texture_ref);
-    draw_texture_gpu_transformed(rect, transform, uv_rect, color, texture_view, Vector2(texture->get_size()), filter);
 }
 
 Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const

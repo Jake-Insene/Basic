@@ -1,7 +1,8 @@
 #pragma once
-#include "gpu/gpu.h"
-#include "graphics/render_device.h"
-#include "graphics/gpu_memory_allocator_types.h"
+#include <gpu/gpu.h>
+
+#include "Basic/Core/RenderDevice.hpp"
+#include "Basic/Core/GPUMemoryAllocator.hpp"
 
 
 namespace Basic
@@ -76,7 +77,7 @@ struct FrameContext
 
     struct InternalData
     {
-        Graphics::RenderDevice* render_device;
+        RenderDevice& render_device;
 
         GPU::BufferID transient_vertex_buffer;
         GPUMemoryAllocationID transient_vertex_buffer_allocation;
@@ -88,9 +89,13 @@ struct FrameContext
         usize current_offset;
 
         GPU::DescriptorPoolID pool;
+
+        InternalData(RenderDevice& render_device)
+        : render_device(render_device)
+        {}
     } data;
 
-    FrameContext(Graphics::RenderDevice* render_device);
+    FrameContext(Basic::RenderDevice& render_device);
     ~FrameContext();
 
     void reset();

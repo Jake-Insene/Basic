@@ -10,33 +10,33 @@ swap_chain(info.swap_chain),
 command_pool(
     {
         .allocator = info.allocator,
-        .device = info.render_device->get_device(),
+        .device = info.render_device.get_device(),
         .queue_usage = GPU::QueueUsage::Graphics,
     }
 ),
 frame_index(), frames(),
-render_finished_semaphores(info.allocator, info.swap_chain->get_image_count(), {})
+render_finished_semaphores(info.allocator, info.swap_chain.get_image_count(), {})
 {
     frame_index = 0;
 
     Core::Mem::Placement(frames);
     for(RenderFrame& frame : frames)
     {
-        frame.present_complete_semaphore = GPU::semaphore_create(render_device->get_device(), {}),
+        frame.present_complete_semaphore = GPU::semaphore_create(render_device.get_device(), {}),
         frame.in_flight_fence = GPU::FenceID::invalid();
     }
 
-    render_finished_semaphores.resize(swap_chain->get_image_count());
+    render_finished_semaphores.resize(swap_chain.get_image_count());
     (void)render_finished_semaphores.iter().transform([&](GPU::SemaphoreID)
     {
-        return GPU::semaphore_create(render_device->get_device(), {});
+        return GPU::semaphore_create(render_device.get_device(), {});
     });
 }
 
 Renderer::~Renderer()
 {
     // Work may be on flight.
-    GPU::queue_wait_idle(render_device->get_graphics_queue());
+    GPU::queue_wait_idle(render_device.get_graphics_queue());
 
     (void)render_finished_semaphores.iter().for_each([](GPU::SemaphoreID sem)
     {
@@ -65,7 +65,7 @@ FrameInfo Renderer::begin_frame()
     };
 
     u32 image_index = Core::MaxValue<u32>;
-    bool image_acquired = swap_chain->acquire_image(
+    bool image_acquired = swap_chain.acquire_image(
         &image_index,
         frame.present_complete_semaphore
     );
@@ -82,7 +82,7 @@ FrameInfo Renderer::begin_frame()
     {
         const GPU::SemaphoreID present_complete_semaphore = frame.present_complete_semaphore;
         frame.in_flight_fence = command_pool.execute_empty(
-            render_device->get_graphics_queue(),
+            render_device.get_graphics_queue(),
             {
                 .wait_semaphores = Slice(&present_complete_semaphore, 1),
                 .wait_stages = wait_stages,
@@ -93,8 +93,8 @@ FrameInfo Renderer::begin_frame()
     else if(image_acquired && image_index != Core::MaxValue<u32>)
     {
         frame_flags |= FrameFlags::Acquired;
-        image = swap_chain->get_image(image_index).image;    
-        image_view = swap_chain->get_image(image_index).image_view;    
+        image = swap_chain.get_image(image_index).image;    
+        image_view = swap_chain.get_image(image_index).image_view;    
     }
 
     return FrameInfo
@@ -104,7 +104,7 @@ FrameInfo Renderer::begin_frame()
         .image_index = image_index,
         .image = image,
         .image_view = image_view,
-        .image_size = swap_chain->get_image_size(),
+        .image_size = swap_chain.get_image_size(),
     };
 }
 
@@ -127,7 +127,7 @@ void Renderer::submit_command_buffer(const FrameInfo& frame_info, const Slice<co
     const GPU::SemaphoreID render_finished_semaphore = render_finished_semaphores.get(frame_info.frame_index);
 
     frame.in_flight_fence = command_pool.execute(
-        render_device->get_graphics_queue(),
+        render_device.get_graphics_queue(),
         {
             .wait_semaphores = Slice(&present_complete_semaphore, 1),
             .wait_stages = wait_stages,
@@ -140,7 +140,7 @@ void Renderer::submit_command_buffer(const FrameInfo& frame_info, const Slice<co
 void Renderer::present(const FrameInfo& frame_info)
 {
     const GPU::SemaphoreID render_finished_semaphore = render_finished_semaphores.get(frame_info.frame_index);
-    swap_chain->present(
+    swap_chain.present(
         frame_info.image_index,
         Slice(&render_finished_semaphore, 1)
     );

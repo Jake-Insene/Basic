@@ -1,17 +1,18 @@
 #include "Basic/Core/RenderTarget.hpp"
 
-#include <engine/engine.h>
 
 
 namespace Basic
 {
 
-RenderTarget::RenderTarget(GPU::TextureFormat render_target_format, const Vector2I& size)
+RenderTarget::RenderTarget(RenderDevice& render_device, GPU::TextureFormat render_target_format,
+    const Vector2I& size)
+: data(render_device)
 {
     for(u32 i = 0; i < MaxFramesInFlight; i++)
     {
         data.textures[i] = GPU::texture_create(
-            Engine::get_render_device()->get_device(),
+            render_device.get_device(),
             GPU::TextureCreateInfo::create(
                 GPU::TextureType::Texture2D, render_target_format,
                 Vector3U(size.x, size.y, 1), 1, 1,
@@ -23,20 +24,20 @@ RenderTarget::RenderTarget(GPU::TextureFormat render_target_format, const Vector
             )
         );
 
-        data.allocations[i] = Engine::get_gpu_memory_allocator()->allocate(
-            Graphics::GPUMemoryAllocator::AllocationTag::Texture,
+        data.allocations[i] = render_device.get_gpu_memory_allocator().allocate(
+            AllocationTag::Texture,
             GPU::texture_get_memory_requirements(data.textures[i])
         );
 
         GPU::texture_bind_memory_heap(data.textures[i],
             GPU::BindMemoryInfo::create(
-                Engine::get_gpu_memory_allocator()->allocation_get_heap(data.allocations[i]),
-                Engine::get_gpu_memory_allocator()->allocation_get_offset(data.allocations[i])
+                render_device.get_gpu_memory_allocator().allocation_get_heap(data.allocations[i]),
+                render_device.get_gpu_memory_allocator().allocation_get_offset(data.allocations[i])
             )
         );
 
         data.texture_views[i] = GPU::texture_view_create(
-            Engine::get_render_device()->get_device(),
+            render_device.get_device(),
             GPU::TextureViewCreateInfo::create(
                 GPU::TextureViewType::Texture2D, render_target_format,
                 data.textures[i],
@@ -56,7 +57,7 @@ RenderTarget::~RenderTarget()
     {
         GPU::texture_view_destroy(get_texture_view(i));
      
-        Engine::get_gpu_memory_allocator()->free(data.allocations[i]);
+        data.render_device.get_gpu_memory_allocator().free(data.allocations[i]);
         GPU::texture_destroy(get_texture(i));
     }
 }

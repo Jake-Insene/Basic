@@ -1,10 +1,10 @@
 #pragma once
 #include <Collections/Array.hpp>
 #include <Collections/Delegate.hpp>
-#include <graphics/render_device.h>
 #include <Mem/LinearAllocator.hpp>
 
 #include "Basic/Core/RenderCore.hpp"
+#include "Basic/Core/RenderDevice.hpp"
 
 
 namespace Basic
@@ -96,7 +96,7 @@ struct RenderGraph
     struct InternalData
     {
         Mem::Allocator& allocator;
-        Graphics::RenderDevice* render_device;
+        RenderDevice& render_device;
 
         FrameContext frame_context[MaxFramesInFlight];
 
@@ -106,7 +106,7 @@ struct RenderGraph
         Mem::LinearAllocator tmp_allocator;
     } data;
 
-    RenderGraph(Mem::Allocator& allocator, Graphics::RenderDevice* render_device);
+    RenderGraph(Mem::Allocator& allocator, RenderDevice& render_device);
     ~RenderGraph();
 
     FrameContext& get_frame_context(const FrameInfo& frame_info);

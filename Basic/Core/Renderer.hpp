@@ -1,10 +1,10 @@
 #pragma once
 #include <gpu/gpu.h>
-#include <graphics/command_pool.h>
-#include <graphics/swap_chain.h>
-#include <graphics/render_device.h>
 
+#include "Basic/Core/CommandPool.hpp"
 #include "Basic/Core/RenderCore.hpp"
+#include "Basic/Core/RenderDevice.hpp"
+#include "Basic/Core/SwapChain.hpp"
 
 
 struct GPUMemoryAllocator;
@@ -17,9 +17,9 @@ struct RendererCreateInfo
     // Renderer allocator.
     Mem::Allocator& allocator;
     // The Render Device to use.
-    Graphics::RenderDevice* render_device;
+    RenderDevice& render_device;
     // The Swap Chain containing the image to render to.
-    Graphics::SwapChain* swap_chain;
+    SwapChain& swap_chain;
 };
 
 /**
@@ -37,10 +37,10 @@ struct Renderer
     };
 
     Mem::Allocator& allocator;
-    Graphics::RenderDevice* render_device;
-    Graphics::SwapChain* swap_chain;
+    RenderDevice& render_device;
+    SwapChain& swap_chain;
 
-    Graphics::CommandPool command_pool;
+    CommandPool command_pool;
     u32 frame_index;
         
     RenderFrame frames[MaxFramesInFlight];

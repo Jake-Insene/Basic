@@ -1,13 +1,12 @@
 #include "Basic/2D/GeometryBatch.hpp"
 
-#include <engine/engine.h>
-#include <graphics/shader.h>
+#include "Basic/Core/Shader.hpp"
 
 
 namespace Basic
 {
 
-GeometryBatch::GeometryBatch(Mem::Allocator& allocator, GPU::TextureFormat render_attachment_format)
+GeometryBatch::GeometryBatch(Mem::Allocator& allocator, RenderDevice& render_device, GPU::TextureFormat render_attachment_format)
 : allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
 {
@@ -16,7 +15,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
         GPU::ConstantBlock::create(GPU::ShaderStage::Vertex, 0, sizeof(BatchBlock)),
     };
 
-    Graphics::Shader primitive_shader{allocator,
+    Basic::Shader primitive_shader{allocator,
         {
             .path = "shaders/packages/2D/GeometryBatch.slang.spirv",
             .vertex_name = "VertexMain",
@@ -44,7 +43,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             GPU::VertexAttribute::create(0, 0, GPU::VertexFormat::RGBA32Float, 0),
         };
 
-        line_pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
+        line_pipeline_layout = GPU::pipeline_layout_create(render_device.get_device(),
             GPU::PipelineLayoutCreateInfo::create(shared_blocks, {})
         );
 
@@ -53,7 +52,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             render_attachment_format,
         };
 
-        line_pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
+        line_pipeline = GPU::pipeline_create(render_device.get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
                 primitive_shader.get_stages(),
@@ -79,7 +78,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             GPU::VertexAttribute::create(0, 0, GPU::VertexFormat::RGBA32Float, 0),
         };
 
-        triangle_pipeline_layout = GPU::pipeline_layout_create(Engine::get_render_device()->get_device(),
+        triangle_pipeline_layout = GPU::pipeline_layout_create(render_device.get_device(),
             GPU::PipelineLayoutCreateInfo::create(shared_blocks, {})
         );
 
@@ -88,7 +87,7 @@ current_topology(GPU::PrimitiveTopology::Unknown), state(RecordingState::End)
             render_attachment_format,
         };
 
-        triangle_pipeline = GPU::pipeline_create(Engine::get_render_device()->get_device(),
+        triangle_pipeline = GPU::pipeline_create(render_device.get_device(),
             GPU::PipelineCreateInfo::create(
                 GPU::PipelineBindPoint::Graphics,
                 primitive_shader.get_stages(),

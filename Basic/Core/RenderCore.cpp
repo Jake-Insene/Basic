@@ -1,42 +1,41 @@
 #include "Basic/Core/RenderCore.hpp"
 
-#include <engine/engine.h>
+#include "Basic/Core/RenderDevice.hpp"
 
 
 namespace Basic
 {
 
-FrameContext::FrameContext(Graphics::RenderDevice* render_device)
+FrameContext::FrameContext(RenderDevice& render_device)
+: data(render_device)
 {
-    data.render_device = render_device;
-
-    data.transient_vertex_buffer = GPU::buffer_create(render_device->get_device(),
+    data.transient_vertex_buffer = GPU::buffer_create(render_device.get_device(),
         GPU::BufferCreateInfo::create(GPU::BufferUsage::VertexBuffer | GPU::BufferUsage::TransferSource, InitialTransientSize));
     
-    data.transient_vertex_buffer_allocation = Engine::get_gpu_memory_allocator()->allocate(
-        Graphics::GPUMemoryAllocator::AllocationTag::Staging,
+    data.transient_vertex_buffer_allocation = render_device.get_gpu_memory_allocator().allocate(
+        AllocationTag::Staging,
         GPU::buffer_get_memory_requirements(data.transient_vertex_buffer));
     
-    data.transient_mapped = Engine::get_gpu_memory_allocator()->allocation_map(
+    data.transient_mapped = render_device.get_gpu_memory_allocator().allocation_map(
         data.transient_vertex_buffer_allocation);
     GPU::buffer_bind_memory_heap(data.transient_vertex_buffer,
         GPU::BindMemoryInfo::create(
-            Engine::get_gpu_memory_allocator()->allocation_get_heap(data.transient_vertex_buffer_allocation),
-            Engine::get_gpu_memory_allocator()->allocation_get_offset(data.transient_vertex_buffer_allocation)
+            render_device.get_gpu_memory_allocator().allocation_get_heap(data.transient_vertex_buffer_allocation),
+            render_device.get_gpu_memory_allocator().allocation_get_offset(data.transient_vertex_buffer_allocation)
         )
     );
     
-    data.transient_vertex_buffer_local = GPU::buffer_create(render_device->get_device(),
+    data.transient_vertex_buffer_local = GPU::buffer_create(render_device.get_device(),
         GPU::BufferCreateInfo::create(GPU::BufferUsage::VertexBuffer | GPU::BufferUsage::TransferDestination, InitialTransientSize));
     
-    data.transient_vertex_buffer_local_allocation = Engine::get_gpu_memory_allocator()->allocate(
-        Graphics::GPUMemoryAllocator::AllocationTag::Buffer,
+    data.transient_vertex_buffer_local_allocation = render_device.get_gpu_memory_allocator().allocate(
+        AllocationTag::Buffer,
         GPU::buffer_get_memory_requirements(data.transient_vertex_buffer_local));
 
     GPU::buffer_bind_memory_heap(data.transient_vertex_buffer_local,
         GPU::BindMemoryInfo::create(
-            Engine::get_gpu_memory_allocator()->allocation_get_heap(data.transient_vertex_buffer_local_allocation),
-            Engine::get_gpu_memory_allocator()->allocation_get_offset(data.transient_vertex_buffer_local_allocation)
+            render_device.get_gpu_memory_allocator().allocation_get_heap(data.transient_vertex_buffer_local_allocation),
+            render_device.get_gpu_memory_allocator().allocation_get_offset(data.transient_vertex_buffer_local_allocation)
         )
     );
     
@@ -48,16 +47,16 @@ FrameContext::FrameContext(Graphics::RenderDevice* render_device)
         GPU::DescriptorPoolSize::combined_texture_sampler(MaxCombinedTextureSamplers),
     };
     
-    data.pool = GPU::descriptor_pool_create(render_device->get_device(),
+    data.pool = GPU::descriptor_pool_create(render_device.get_device(),
         GPU::DescriptorPoolCreateInfo::create(MaxSets, pool_sizes));
 }
 
 FrameContext::~FrameContext()
 {
-    Engine::get_gpu_memory_allocator()->free(data.transient_vertex_buffer_local_allocation);
+    data.render_device.get_gpu_memory_allocator().free(data.transient_vertex_buffer_local_allocation);
     GPU::buffer_destroy(data.transient_vertex_buffer_local);
 
-    Engine::get_gpu_memory_allocator()->free(data.transient_vertex_buffer_allocation);
+    data.render_device.get_gpu_memory_allocator().free(data.transient_vertex_buffer_allocation);
     GPU::buffer_destroy(data.transient_vertex_buffer);
 
     GPU::descriptor_pool_destroy(data.pool);
@@ -109,7 +108,7 @@ GPU::DescriptorSetID FrameContext::allocate_descriptor_set(GPU::DescriptorSetLay
         set_layout
     };
     
-    GPU::descriptor_set_allocate(data.render_device->get_device(),
+    GPU::descriptor_set_allocate(data.render_device.get_device(),
         GPU::DescriptorSetAllocateInfo::create(data.pool, allocate_set_layouts),
         Slice(&set, 1));
 

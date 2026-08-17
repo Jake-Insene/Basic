@@ -41,7 +41,7 @@ void PassBuilder::clear()
     data.textures.clear();
 }
 
-RenderGraph::RenderGraph(Mem::Allocator& allocator, Graphics::RenderDevice* render_device) :
+RenderGraph::RenderGraph(Mem::Allocator& allocator, RenderDevice& render_device) :
 data{
     .allocator = allocator,
     .render_device = render_device,
