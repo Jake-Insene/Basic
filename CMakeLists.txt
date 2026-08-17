@@ -16,6 +16,8 @@ bread_package(
         "Basic/2D/GeometryBatch.cpp"
         "Basic/2D/SpriteBatch.cpp"
 
+        "Basic/Audio/AudioService.cpp"
+
         "Basic/Core/CommandPool.cpp"
         "Basic/Core/GPUResourceManager.cpp"
         "Basic/Core/RenderCore.cpp"
