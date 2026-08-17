@@ -1,9 +1,9 @@
-#include "Basic/Resource/font.h"
+#include "Basic/Resource/Font.hpp"
 
 #include <external/stb_truetype.h>
 
-#include "Basic/Resource/resource_manager_internal.h"
-#include "Basic/Resource/resource_manager.h"
+#include "Basic/Resource/ResourceManagerInternal.hpp"
+#include "Basic/Resource/ResourceManager.hpp"
 
 
 static void load_theme(Mem::Allocator& allocator, const Slice<u8>& font_file_content,

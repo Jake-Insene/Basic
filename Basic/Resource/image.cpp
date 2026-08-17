@@ -1,9 +1,9 @@
-#include "Basic/Resource/image.h"
+#include "Basic/Resource/Image.hpp"
 
 #include <IO/File.hpp>
 #include <external/stb_image.h>
 
-#include "Basic/Resource/resource_manager_internal.h"
+#include "Basic/Resource/ResourceManagerInternal.hpp"
 
 
 Image::Image(const ResourceCreateInfo& info)

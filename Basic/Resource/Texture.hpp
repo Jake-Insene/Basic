@@ -3,8 +3,8 @@
 #include "math/vec2.h"
 
 #include "Basic/Core/GPUResourceManager.hpp"
-#include "Basic/Resource/resource.h"
-#include "Basic/Resource/image.h"
+#include "Basic/Resource/Resource.hpp"
+#include "Basic/Resource/Image.hpp"
 
 
 // A group of pixels allocated in the gpu.

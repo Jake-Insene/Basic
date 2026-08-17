@@ -1,8 +1,8 @@
-#include "Basic/Resource/texture.h"
+#include "Basic/Resource/Texture.hpp"
 
 #include "Basic/Core/RenderDevice.hpp"
-#include "Basic/Resource/resource_manager_internal.h"
-#include "Basic/Resource/resource_manager.h"
+#include "Basic/Resource/ResourceManagerInternal.hpp"
+#include "Basic/Resource/ResourceManager.hpp"
 
 #include <external/stb_image.h>
 

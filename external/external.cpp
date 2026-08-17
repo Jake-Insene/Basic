@@ -1,6 +1,7 @@
-#include "Basic/Resource/resource_manager.h"
+#include "Basic/Resource/ResourceManager.hpp"
 
 
+// TODO: At applicacion can only use one resource manager now.
 extern ResourceManager* current_rm;
 
 static void* _alloc(usize size)

@@ -5,7 +5,7 @@
 
 #include "Basic/Core/GPUMemoryAllocator.hpp"
 #include "Basic/Core/GPUResourceManager.hpp"
-#include "Basic/Resource/resource.h"
+#include "Basic/Resource/Resource.hpp"
 
 
 struct Texture2D;

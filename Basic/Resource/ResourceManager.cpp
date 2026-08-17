@@ -1,13 +1,13 @@
-#include "Basic/Resource/resource_manager.h"
+#include "Basic/Resource/ResourceManager.hpp"
 
 #include <IO/File.hpp>
 
 #include "Basic/Core/RenderDevice.hpp"
-#include "Basic/Resource/resource_manager_internal.h"
-#include "Basic/Resource/font.h"
-#include "Basic/Resource/image.h"
-#include "Basic/Resource/texture.h"
-#include "Basic/Resource/sound.h"
+#include "Basic/Resource/ResourceManagerInternal.hpp"
+#include "Basic/Resource/Font.hpp"
+#include "Basic/Resource/Image.hpp"
+#include "Basic/Resource/Texture.hpp"
+#include "Basic/Resource/Sound.hpp"
 
 #include <external/stb_image.h>
 

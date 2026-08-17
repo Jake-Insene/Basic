@@ -4,7 +4,7 @@
 #include <Collections/StringMap.hpp>
 
 #include "Basic/Core/GPUResourceManager.hpp"
-#include "Basic/Resource/resource.h"
+#include "Basic/Resource/Resource.hpp"
 
 
 namespace Basic

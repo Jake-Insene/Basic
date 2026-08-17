@@ -1,6 +1,6 @@
-#include "Basic/Resource/resource.h"
+#include "Basic/Resource/Resource.hpp"
 
-#include "Basic/Resource/resource_manager.h"
+#include "Basic/Resource/ResourceManager.hpp"
 
 
 Resource::Resource(const ResourceCreateInfo& info)

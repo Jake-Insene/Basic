@@ -2,7 +2,7 @@
 #include <audio/audio.h>
 #include <Collections/Error.hpp>
 
-#include "Basic/Resource/resource.h"
+#include "Basic/Resource/Resource.hpp"
 
 
 struct Sound : Resource

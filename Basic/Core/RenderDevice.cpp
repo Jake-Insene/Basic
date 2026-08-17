@@ -101,9 +101,14 @@ RenderDevice::~RenderDevice()
     GPU::queue_wait_idle(get_present_queue());
 }
 
-GPU::DeviceID RenderDevice::create_device()
+GPU::PhysicalDeviceID RenderDevice::select_physical_device()
 {
-    return GPU::device_create(_select_physical_device(), {});
+    return _select_physical_device();
+}
+
+GPU::DeviceID RenderDevice::create_device(GPU::PhysicalDeviceID selected_physical_device)
+{
+    return GPU::device_create(selected_physical_device, {});
 }
 
 }

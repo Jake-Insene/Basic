@@ -2,7 +2,7 @@
 #include <Collections/Error.hpp>
 #include <math/vec2.h>
 
-#include "Basic/Resource/resource.h"
+#include "Basic/Resource/Resource.hpp"
 
 
 /*

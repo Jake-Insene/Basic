@@ -1,9 +1,9 @@
-#include "Basic/Resource/sound.h"
+#include "Basic/Resource/Sound.hpp"
 
 #include <external/dr_wav.h>
 
-#include "Basic/Resource/resource_manager.h"
-#include "Basic/Resource/resource_manager_internal.h"
+#include "Basic/Resource/ResourceManager.hpp"
+#include "Basic/Resource/ResourceManagerInternal.hpp"
 
 
 static inline void* dr_alloc(size_t size, [[maybe_unused]] void* user_data)

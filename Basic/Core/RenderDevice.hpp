@@ -44,7 +44,8 @@ struct RenderDevice
 
     GPUMemoryAllocator& get_gpu_memory_allocator() const { return memory_allocator; }
 
-    static GPU::DeviceID create_device();
+    static GPU::PhysicalDeviceID select_physical_device();
+    static GPU::DeviceID create_device(GPU::PhysicalDeviceID selected_physical_device);
 };
 
 }
