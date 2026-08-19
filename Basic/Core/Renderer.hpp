@@ -7,8 +7,6 @@
 #include "Basic/Core/SwapChain.hpp"
 
 
-struct GPUMemoryAllocator;
-
 namespace Basic
 {
 

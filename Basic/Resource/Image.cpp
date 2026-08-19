@@ -6,6 +6,9 @@
 #include "Basic/Resource/ResourceManagerInternal.hpp"
 
 
+namespace Basic
+{
+
 Image::Image(const ResourceCreateInfo& info)
 : Resource(info)
 {
@@ -70,4 +73,6 @@ void Image::unload()
         data.size = {};
         data.format = {};
     }
+}
+
 }

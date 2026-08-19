@@ -6,6 +6,9 @@
 #include "Basic/Resource/Sound.hpp"
 
 
+namespace Basic
+{
+
 AudioService::Mixer::Mixer(Mem::Allocator& allocator, Collections::StringView name)
 : name(allocator, 0, name), volume(1.F), plays(allocator, 4, {})
 {}
@@ -143,4 +146,6 @@ void AudioService::_mixer_mix(Mixer* mixer, Audio::FrameF* frame)
         frame->add(sample_f);
         enqueue_play.frame_index += 1;
     }
+}
+
 }

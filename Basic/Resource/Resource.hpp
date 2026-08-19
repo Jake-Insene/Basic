@@ -5,6 +5,9 @@
 #include <Collections/StringView.hpp>
 
 
+namespace Basic
+{
+
 struct ResourceManager;
 
 enum ResourceType
@@ -77,4 +80,4 @@ struct Resource
     virtual ~Resource();
 };
 
-
+}

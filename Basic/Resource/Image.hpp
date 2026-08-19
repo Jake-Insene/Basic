@@ -5,6 +5,9 @@
 #include "Basic/Resource/Resource.hpp"
 
 
+namespace Basic
+{
+
 /*
 * Represents a collection of pixels in memory.
 */
@@ -37,3 +40,4 @@ struct Image : Resource
     ImageFormat get_format() const { return data.format; }
 };
 
+}

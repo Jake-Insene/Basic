@@ -5,6 +5,9 @@
 #include "Basic/Resource/Resource.hpp"
 
 
+namespace Basic
+{
+
 struct Sound : Resource
 {
     RESOURCE(RESOURCE_SOUND, ResourceFlags::LoadFromAssets, ResourceExtensions("wav"))
@@ -27,3 +30,5 @@ struct Sound : Resource
     Audio::Frame get_frame(usize index) const;
     usize get_frame_count() const { return is_mono() ? data.samples.len : data.samples.len / 2; }
 };
+
+}

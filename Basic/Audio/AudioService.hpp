@@ -5,6 +5,9 @@
 #include <Mem/Allocator.hpp>
 
 
+namespace Basic
+{
+
 struct Sound;
 
 struct AudioService
@@ -57,3 +60,5 @@ struct AudioService
 
     void _mixer_mix(Mixer* mixer, Audio::FrameF* frame);
 };
+
+}

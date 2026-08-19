@@ -8,8 +8,8 @@
 #include "Basic/Resource/Resource.hpp"
 
 
-struct Texture2D;
-
+namespace Basic
+{
 
 struct Font : Resource
 {
@@ -49,3 +49,5 @@ struct Font : Resource
 
 	const FontTheme& _theme_with_size(i32 font_size);
 };
+
+}

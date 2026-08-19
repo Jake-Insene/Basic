@@ -6,6 +6,9 @@
 #include "Basic/Resource/ResourceManagerInternal.hpp"
 
 
+namespace Basic
+{
+
 static inline void* dr_alloc(size_t size, [[maybe_unused]] void* user_data)
 {
     ResourceManager* rm = reinterpret_cast<ResourceManager*>(user_data);
@@ -114,4 +117,6 @@ Audio::Frame Sound::get_frame(usize index) const
         data.samples[index],
         data.samples[index]
     );
+}
+
 }

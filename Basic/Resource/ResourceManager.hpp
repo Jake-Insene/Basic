@@ -9,8 +9,8 @@
 
 namespace Basic
 {
+
 struct RenderDevice;
-}
 
 struct Image;
 struct SpriteAnimation;
@@ -93,4 +93,4 @@ struct ResourceManager
     [[nodiscard]] Collections::Result<Resource*, Error> _load_font(Collections::StringView path);
 };
 
-
+}

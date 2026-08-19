@@ -6,6 +6,8 @@
 
 #include <external/stb_image.h>
 
+namespace Basic
+{
 
 Texture::Texture(const ResourceCreateInfo& info)
 : Resource(info)
@@ -95,4 +97,6 @@ Error Texture2D::load_from_raw(Image::ImageFormat image_format, const Vector2I& 
     size = image_size;
 
     return ErrorCode::Ok;
+}
+
 }

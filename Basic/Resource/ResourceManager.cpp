@@ -12,7 +12,10 @@
 #include <external/stb_image.h>
 
 
-ResourceManager* current_rm;
+Basic::ResourceManager* current_rm;
+
+namespace Basic
+{
 
 ResourceManager::ResourceManager(Mem::Allocator& allocator, Basic::RenderDevice& render_device)
 : allocator(allocator), resources(allocator, 4),
@@ -195,3 +198,4 @@ Collections::Result<Resource*, Error> ResourceManager::_load_font(Collections::S
     return new_font;
 }
 
+}

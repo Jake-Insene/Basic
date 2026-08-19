@@ -6,6 +6,9 @@
 #include "Basic/Resource/ResourceManager.hpp"
 
 
+namespace Basic
+{
+
 static void load_theme(Mem::Allocator& allocator, const Slice<u8>& font_file_content,
     stbtt_fontinfo* font, Font::FontTheme& theme, Basic::GPUResourceManager& gpu_resource_manager)
 {
@@ -158,4 +161,6 @@ const Font::FontTheme& Font::_theme_with_size(i32 font_size)
     allocator.free(content);
 
     return new_theme;
+}
+
 }

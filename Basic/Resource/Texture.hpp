@@ -7,6 +7,9 @@
 #include "Basic/Resource/Image.hpp"
 
 
+namespace Basic
+{
+
 // A group of pixels allocated in the gpu.
 struct Texture : Resource
 {
@@ -34,3 +37,4 @@ struct Texture2D : Texture
     Error load_from_raw(Image::ImageFormat image_format, const Vector2I& image_size, const Slice<u8>& pixels);
 };
 
+}
