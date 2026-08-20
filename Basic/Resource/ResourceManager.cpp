@@ -9,8 +9,6 @@
 #include "Basic/Resource/Texture.hpp"
 #include "Basic/Resource/Sound.hpp"
 
-#include <external/stb_image.h>
-
 
 Basic::ResourceManager* current_rm;
 

@@ -1,6 +1,6 @@
 #include "Basic/Resource/Sound.hpp"
 
-#include <external/dr_wav.h>
+#include <External/dr_wav.h>
 
 #include "Basic/Resource/ResourceManager.hpp"
 #include "Basic/Resource/ResourceManagerInternal.hpp"

@@ -2,7 +2,7 @@
 # External sources
 file(GLOB EXTERNAL_SRC
     # stb
-    external/external.cpp
+    External/External.cpp
 )
 
 bread_package(

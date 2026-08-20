@@ -1,6 +1,5 @@
 #include "Basic/Audio/AudioService.hpp"
 
-#include <audio/audio.h>
 #include <math/funcs.h>
 
 #include "Basic/Resource/Sound.hpp"
@@ -43,17 +42,17 @@ void AudioService::update()
 
     for(usize frame_i = 0; frame_i < frame_count; frame_i++)
     {
-        Audio::FrameF frame_f = Audio::FrameF();
+        Audio::Frame frame = Audio::Frame();
         for(AudioService::Mixer& mixer : mixers_slice)
         {
-            _mixer_mix(&mixer, &frame_f);
+            _mixer_mix(&mixer, &frame);
         }
         
         Audio::Frame final_frame = Audio::Frame(
-            i16(Math::clamp<f32>(frame_f.left, -32768.0F, 32767.0F)),
-            i16(Math::clamp<f32>(frame_f.right, -32768.0F, 32767.0F))
+            Math::clamp<f32>(frame.left, -32768.0F, 32767.0F),
+            Math::clamp<f32>(frame.right, -32768.0F, 32767.0F)
         );
-
+        final_frame.mul(1/32768.0F);
         samples[frame_i] = final_frame;
     }
 
@@ -109,7 +108,7 @@ void AudioService::mixer_play(u32 mixer, Sound* sound, const PlayInfo& play_info
     );
 }
 
-void AudioService::_mixer_mix(Mixer* mixer, Audio::FrameF* frame)
+void AudioService::_mixer_mix(Mixer* mixer, Audio::Frame* frame)
 {
     if(mixer->plays.count == 0)
     {
@@ -136,14 +135,10 @@ void AudioService::_mixer_mix(Mixer* mixer, Audio::FrameF* frame)
             }
         }
 
-        const Audio::Frame sample = enqueue_play.sound->get_frame(enqueue_play.frame_index);
-        Audio::FrameF sample_f = Audio::FrameF(
-            sample.left,
-            sample.right
-        );
+        Audio::Frame sample = enqueue_play.sound->get_frame(enqueue_play.frame_index);
 
-        sample_f.mul(mixer->volume * enqueue_play.play_info.volume * normalize);
-        frame->add(sample_f);
+        sample.mul(mixer->volume * enqueue_play.play_info.volume * normalize);
+        frame->add(sample);
         enqueue_play.frame_index += 1;
     }
 }

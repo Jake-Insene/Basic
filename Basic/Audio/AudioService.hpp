@@ -1,5 +1,5 @@
 #pragma once
-#include <audio/audio.h>
+#include <Audio/Audio.hpp>
 #include <Collections/Array.hpp>
 #include <Collections/String.hpp>
 #include <Mem/Allocator.hpp>
@@ -58,7 +58,7 @@ struct AudioService
 
     void mixer_play(u32 mixer, Sound* sound, const PlayInfo& play_info);
 
-    void _mixer_mix(Mixer* mixer, Audio::FrameF* frame);
+    void _mixer_mix(Mixer* mixer, Audio::Frame* frame);
 };
 
 }
