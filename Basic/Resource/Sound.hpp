@@ -25,7 +25,7 @@ struct Sound : Resource
     Error load(Collections::StringView path);
 
     bool is_mono() const { return data.mono; }
-    bool is_stereo() const { return !data.mono; }
+    bool is_stereo() const { return !is_mono(); }
 
     Audio::Frame get_frame(usize index) const;
     usize get_frame_count() const { return is_mono() ? data.samples.len : data.samples.len / 2; }

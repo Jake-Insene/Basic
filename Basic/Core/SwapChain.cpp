@@ -93,11 +93,9 @@ void SwapChain::_init_images()
     images.resize(GPU::swap_chain_get_image_count(swap_chain));
     for(usize i = 0; i < images.count; i++)
     {
-        images.get(i) = 
-        {
-            .image = GPU::swap_chain_get_image(swap_chain, i),
-            .image_view = GPU::swap_chain_get_image_view(swap_chain, i),
-        };
+        ImageInfo& image_info = images.get(i);
+        image_info.image = GPU::swap_chain_get_image(swap_chain, i);
+        image_info.image_view = GPU::swap_chain_get_image_view(swap_chain, i);
     }
 }
 

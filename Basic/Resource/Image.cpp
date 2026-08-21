@@ -1,7 +1,7 @@
 #include "Basic/Resource/Image.hpp"
 
 #include <IO/File.hpp>
-#include <external/stb_image.h>
+#include <External/stb_image.h>
 
 #include "Basic/Resource/ResourceManagerInternal.hpp"
 

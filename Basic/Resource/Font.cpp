@@ -1,6 +1,6 @@
 #include "Basic/Resource/Font.hpp"
 
-#include <external/stb_truetype.h>
+#include <External/stb_truetype.h>
 
 #include "Basic/Resource/ResourceManagerInternal.hpp"
 #include "Basic/Resource/ResourceManager.hpp"

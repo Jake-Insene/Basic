@@ -43,6 +43,8 @@ struct SwapChain
         GPU::TextureID image;
         // Image View GPU handle of surface_format.
         GPU::TextureViewID image_view;
+
+        ImageInfo() {}
     };
 
     Mem::Allocator& allocator;

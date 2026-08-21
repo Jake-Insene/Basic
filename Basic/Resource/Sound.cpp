@@ -22,18 +22,17 @@ static inline void* dr_realloc(void* mem, size_t new_size, [[maybe_unused]] void
 
     ResourceManager* rm = reinterpret_cast<ResourceManager*>(user_data);
     Mem::Allocator& allocator = rm->get_allocator();
+    if(mem == nullptr)
+    {
+        return dr_alloc(new_size, user_data);
+    }
+
     if (allocator.realloc(old_mem, new_size, 16))
     {
         return mem;
     }
 
-    Slice new_mem = allocator.alloc(new_size, 16);
-    if (mem != nullptr)
-    {
-        allocator.free(old_mem);
-    }
-
-    return new_mem.items;
+    return allocator.remap(old_mem, new_size, 16).ptr();
 }
 
 static inline void dr_free(void* mem, [[maybe_unused]] void* user_data)
@@ -81,6 +80,7 @@ Error Sound::load(Collections::StringView path)
     Slice content = IO::File::read_all(allocator, path);
 
     drwav wav = {};
+    alloc_callbacks.pUserData = &resource_manager;
     drwav_init_memory(&wav, content.ptr(), content.len, &alloc_callbacks);
 
     if(wav.channels != 1 && wav.channels != 2)
@@ -90,12 +90,34 @@ Error Sound::load(Collections::StringView path)
         );
     }
 
-    const usize total_samples = static_cast<usize>(wav.totalPCMFrameCount * wav.channels);
+    const usize total_frames = static_cast<usize>(wav.totalPCMFrameCount);
     data.mono = wav.channels == 1;
-    data.samples = allocator.array<i16>(total_samples);
 
-    // Always convert 
-    (void)drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, reinterpret_cast<drwav_int16*>(data.samples.ptr()));
+    Collections::Array<i16> loaded_samples{allocator, total_frames * Audio::OutputChannels, {}};
+    loaded_samples.resize(total_frames * wav.channels);
+
+    // Always convert
+    (void)drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount,
+        reinterpret_cast<drwav_int16*>(loaded_samples.slice().ptr()));
+
+    // resampling
+    const f32 ratio = f32(wav.sampleRate) / f32(Audio::output_get_samples_per_sec());
+    const usize new_total_frames = static_cast<usize>(f32(total_frames) / f32(ratio)); // total_samples * SampleRate/Target
+    data.samples = allocator.array<i16>(new_total_frames * wav.channels);
+
+    for(usize out_frame = 0; out_frame < new_total_frames; out_frame++)
+    {
+        f32 normalized = f32(out_frame) / new_total_frames;
+        usize source_frame = usize(normalized * total_frames);
+
+        usize clamped_frame = Math::clamp(source_frame, 0ULL, total_frames);
+
+        for(usize channel = 0; channel < wav.channels; channel++)
+        {
+            i16 value = loaded_samples.get(clamped_frame * wav.channels + channel);
+            data.samples[out_frame * wav.channels + channel] = value;
+        }
+    }
 
     drwav_uninit(&wav);
     allocator.free(content);

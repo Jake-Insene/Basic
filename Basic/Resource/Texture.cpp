@@ -4,7 +4,7 @@
 #include "Basic/Resource/ResourceManagerInternal.hpp"
 #include "Basic/Resource/ResourceManager.hpp"
 
-#include <external/stb_image.h>
+#include <External/stb_image.h>
 
 namespace Basic
 {
