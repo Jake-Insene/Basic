@@ -45,14 +45,20 @@ void AudioService::update()
         Audio::Frame frame = Audio::Frame();
         for(AudioService::Mixer& mixer : mixers_slice)
         {
-            _mixer_mix(&mixer, &frame);
+            Audio::Frame mixer_frame = Audio::Frame();
+            _mixer_mix(&mixer, &mixer_frame);
+
+            mixer_frame.mul(mixer.volume);
+            
+            // Acumula la pista
+            frame.add(mixer_frame);
         }
         
         Audio::Frame final_frame = Audio::Frame(
-            Math::clamp<f32>(frame.left, -32768.0F, 32767.0F),
-            Math::clamp<f32>(frame.right, -32768.0F, 32767.0F)
+            Math::clamp<f32>(frame.left, -1.0F, 1.0F),
+            Math::clamp<f32>(frame.right, -1.0F, 1.0F)
         );
-        final_frame.mul(1/32768.0F);
+
         samples[frame_i] = final_frame;
     }
 
@@ -115,7 +121,6 @@ void AudioService::_mixer_mix(Mixer* mixer, Audio::Frame* frame)
         return;
     }
 
-    f32 normalize = 1 / f32(mixer->plays.count);
     for(usize play_i = 0; play_i < mixer->plays.count; play_i++)
     {
         AudioService::EnqueuePlay& enqueue_play = mixer->plays.get(play_i);
@@ -137,7 +142,8 @@ void AudioService::_mixer_mix(Mixer* mixer, Audio::Frame* frame)
 
         Audio::Frame sample = enqueue_play.sound->get_frame(enqueue_play.frame_index);
 
-        sample.mul(mixer->volume * enqueue_play.play_info.volume * normalize);
+        sample.mul(1/32768.0F);
+        sample.mul(enqueue_play.play_info.volume);
         frame->add(sample);
         enqueue_play.frame_index += 1;
     }
