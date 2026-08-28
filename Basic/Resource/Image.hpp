@@ -1,6 +1,6 @@
 #pragma once
 #include <Collections/Error.hpp>
-#include <math/vec2.h>
+#include <Math/vec2.h>
 
 #include "Basic/Resource/Resource.hpp"
 

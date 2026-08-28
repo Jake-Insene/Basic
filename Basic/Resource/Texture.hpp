@@ -1,6 +1,6 @@
 #pragma once
 #include "gpu/gpu.h"
-#include "math/vec2.h"
+#include "Math/vec2.h"
 
 #include "Basic/Core/GPUResourceManager.hpp"
 #include "Basic/Resource/Resource.hpp"

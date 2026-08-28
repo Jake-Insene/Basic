@@ -1,7 +1,7 @@
 #pragma once
 #include "Collections/Array.hpp"
 #include "Collections/Error.hpp"
-#include "math/rect_2d.h"
+#include "Math/rect_2d.h"
 
 #include "Basic/Core/GPUMemoryAllocator.hpp"
 #include "Basic/Core/GPUResourceManager.hpp"

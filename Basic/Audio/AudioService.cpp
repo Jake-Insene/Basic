@@ -1,6 +1,6 @@
 #include "Basic/Audio/AudioService.hpp"
 
-#include <math/funcs.h>
+#include <Math/funcs.h>
 
 #include "Basic/Resource/Sound.hpp"
 
