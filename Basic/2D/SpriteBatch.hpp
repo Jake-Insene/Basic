@@ -89,8 +89,11 @@ struct SpriteBatch
     void draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const Vertex& v3,
         GPU::TextureViewID texture_view, SpriteFilter filter);
 
-    void draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
-        const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter);
+    void draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Vector2& pivot,
+        const Rect2D& uv_rect, const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter);
+
+    void draw_texture_transformed_pivot_centered(const Rect2D& rect, const Transform2D& transform,
+        const Rect2D& uv_rect, const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter);
 
     Slice<Batch> get_batches() const;
     Slice<Vertex> get_vertices() const;

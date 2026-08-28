@@ -6,6 +6,14 @@
 namespace Basic
 {
 
+static Vector2 _transform_around_point(const Transform2D& transform,
+    const Vector2& point, const Vector2& pivot)
+{
+    Vector2 local = point - pivot;
+    Vector2 transformed = transform * local;
+    return transformed + pivot;
+}
+
 SpriteBatch::SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device, GPU::TextureFormat render_attachment_format)
 : allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_texture_view(GPU::TextureViewID::invalid()), current_filter(SpriteFilter::MaxCount),
@@ -150,32 +158,55 @@ void SpriteBatch::draw_triangle_vertex(const Vertex& v1, const Vertex& v2, const
     batches.last().vertex_count += 3;
 }
 
-void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Rect2D& uv_rect,
-    const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size, SpriteFilter filter)
+void SpriteBatch::draw_texture_transformed(const Rect2D& rect, const Transform2D& transform, const Vector2& pivot,
+    const Rect2D& uv_rect, const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size,
+    SpriteFilter filter)
 {
     Rect2D normalized_uv = Rect2D(
         uv_rect.position / texture_size,
         uv_rect.size / texture_size
     );
 
-    const Vector2 v1 = rect.position;
-    const Vector2 v2 = rect.position + rect.size;
-    const Vector2 v3 = rect.position + Vector2(rect.size.x, 0);
-    const Vector2 v4 = rect.position + Vector2(0, rect.size.y);
+    const Vector2 vp1 = rect.position;
+    const Vector2 vp2 = rect.position + rect.size;
+    const Vector2 vp3 = rect.position + Vector2(rect.size.x, 0);
+    const Vector2 vp4 = rect.position + Vector2(0, rect.size.y);
 
-    draw_triangle_vertex(
-        {.position = transform * v1, .uv = normalized_uv.position + Vector2(0, normalized_uv.size.y), .color = color, },
-        {.position = transform * v2, .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0), .color = color, },
-        {.position = transform * v3, .uv = normalized_uv.position + normalized_uv.size, .color = color, },
-        texture_view, filter
-    );
+    const Vertex v1 =
+    {
+        .position = _transform_around_point(transform, vp1, pivot),
+        .uv = normalized_uv.position + Vector2(0, normalized_uv.size.y),
+        .color = color, 
+    };
+    const Vertex v2 =
+    {
+        .position = _transform_around_point(transform, vp2, pivot),
+        .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0),
+        .color = color,
+    };
+    const Vertex v3 =
+    {
+        .position = _transform_around_point(transform, vp3, pivot),
+        .uv = normalized_uv.position + normalized_uv.size,
+        .color = color,
+    };
+    const Vertex v4 =
+    {
+        .position = _transform_around_point(transform, vp4, pivot),
+        .uv = normalized_uv.position,
+        .color = color,
+    };
 
-    draw_triangle_vertex(
-        {.position = transform * v1, .uv = normalized_uv.position + Vector2(0, normalized_uv.size.y), .color = color, },
-        {.position = transform * v4, .uv = normalized_uv.position, .color = color, },
-        {.position = transform * v2, .uv = normalized_uv.position + Vector2(normalized_uv.size.x, 0), .color = color, },
-        texture_view, filter
-    );
+    draw_triangle_vertex(v1, v2, v3, texture_view, filter);
+    draw_triangle_vertex(v1, v4, v2, texture_view, filter);
+}
+
+void SpriteBatch::draw_texture_transformed_pivot_centered(const Rect2D& rect, const Transform2D& transform,
+    const Rect2D& uv_rect, const Color& color, GPU::TextureViewID texture_view, const Vector2& texture_size,
+    SpriteFilter filter)
+{
+    draw_texture_transformed(rect, transform, rect.position + rect.size/2.F, uv_rect, color, texture_view,
+        texture_size, filter);
 }
 
 Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const
