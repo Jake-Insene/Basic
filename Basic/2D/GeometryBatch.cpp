@@ -1,6 +1,7 @@
 #include "Basic/2D/GeometryBatch.hpp"
 
 #include "Basic/Core/Shader.hpp"
+#include "Basic/Core/RenderGraph.hpp"
 
 
 namespace Basic
@@ -206,6 +207,31 @@ Slice<const GeometryBatch::Batch> GeometryBatch::get_batches() const
 Slice<const GeometryBatch::Vertex> GeometryBatch::get_vertices() const
 {
     return vertices.slice().as_const();
+}
+
+void GeometryBatch::submit_renderpass(const TransientAllocation primitive_transient, PassResources& resources)
+{
+    for(const GeometryBatch::Batch& batch : get_batches())
+    {
+        GPU::command_buffer_bind_pipeline(resources.command_buffer,
+            GPU::PipelineBindPoint::Graphics, batch.pipeline);
+
+        GPU::command_buffer_constant_block(resources.command_buffer,
+            batch.pipeline_layout, GPU::ShaderStage::Vertex, 0, sizeof(BatchBlock),
+            reinterpret_cast<MemoryAddress>(&batch.block));
+
+        const GPU::BufferID vbs[] =
+        {
+            resources.global_device_vertex_buffer,
+        };
+
+        GPU::command_buffer_bind_vertex_buffers(resources.command_buffer,
+            0, vbs,
+            Slice(&primitive_transient.offset, 1));
+
+        GPU::command_buffer_draw(resources.command_buffer,
+            batch.vertex_count, 1, batch.vb_offset, 0);
+    }
 }
 
 void GeometryBatch::_try_begin_new_batch(GPU::PrimitiveTopology topology)

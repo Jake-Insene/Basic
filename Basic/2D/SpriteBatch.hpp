@@ -13,6 +13,8 @@
 namespace Basic
 {
 
+struct PassResources;
+
 enum class SpriteFilter
 {
     Linear,
@@ -97,6 +99,8 @@ struct SpriteBatch
 
     Slice<Batch> get_batches() const;
     Slice<Vertex> get_vertices() const;
+
+    void submit_renderpass(TransientAllocation sprite_transient, PassResources& resources);
 
     void _bind_to_batch(GPU::TextureViewID texture_view, SpriteFilter filter);
 };

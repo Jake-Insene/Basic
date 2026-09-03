@@ -7,11 +7,14 @@
 #include <Math/rect_2d.h>
 #include <Math/transform_2d.h>
 
+#include "Basic/Core/RenderCore.hpp"
 #include "Basic/Core/RenderDevice.hpp"
 
 
 namespace Basic
 {
+
+struct PassResources;
 
 /*
 * Batches primitives per type.
@@ -90,6 +93,8 @@ struct GeometryBatch
 
     Slice<const Batch> get_batches() const;
     Slice<const Vertex> get_vertices() const;
+
+    void submit_renderpass(TransientAllocation primitive_transient, PassResources& resources);
 
     void _try_begin_new_batch(GPU::PrimitiveTopology new_topology);
     void _set_topology(GPU::PrimitiveTopology new_topology);

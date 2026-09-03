@@ -1,6 +1,7 @@
 #include "Basic/2D/SpriteBatch.hpp"
 
 #include "Basic/Core/Shader.hpp"
+#include "Basic/Core/RenderGraph.hpp"
 
 
 namespace Basic
@@ -217,6 +218,44 @@ Slice<SpriteBatch::Batch> SpriteBatch::get_batches() const
 Slice<SpriteBatch::Vertex> SpriteBatch::get_vertices() const
 {
     return vertices.slice();
+}
+
+void SpriteBatch::submit_renderpass(const TransientAllocation sprite_transient, PassResources& resources)
+{
+    for(const SpriteBatch::Batch& batch : get_batches())
+    {
+        const GPU::DescriptorSetID set = resources.context.allocate_descriptor_set(batch.set_layout);
+        
+        const GPU::WriteDescriptorInfo write_infos[] =
+        {
+            GPU::WriteDescriptorInfo::combined_texture_sampler(set, 0, 0, Slice(&batch.texture, 1)),
+        };
+
+        GPU::descriptor_set_update_descriptors(resources.context.data.render_device.get_device(),
+            { .write_infos = write_infos });
+        
+        GPU::command_buffer_bind_pipeline(resources.command_buffer,
+            GPU::PipelineBindPoint::Graphics, batch.pipeline);
+
+        GPU::command_buffer_bind_descriptor_sets(resources.command_buffer,
+            GPU::PipelineBindPoint::Graphics, batch.pipeline_layout, 0, Slice(&set, 1));
+
+        GPU::command_buffer_constant_block(resources.command_buffer,
+            batch.pipeline_layout, GPU::ShaderStage::Vertex, 0, sizeof(BatchBlock),
+            reinterpret_cast<MemoryAddress>(&batch.block));
+
+        const GPU::BufferID vbs[] =
+        {
+            resources.global_device_vertex_buffer,
+        };
+
+        GPU::command_buffer_bind_vertex_buffers(resources.command_buffer,
+            0, vbs,
+            Slice(&sprite_transient.offset, 1));
+
+        GPU::command_buffer_draw(resources.command_buffer,
+            batch.vertex_count, 1, batch.vb_offset, 0);
+    }
 }
 
 void SpriteBatch::_bind_to_batch(GPU::TextureViewID texture_view, SpriteFilter filter)
