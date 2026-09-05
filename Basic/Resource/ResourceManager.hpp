@@ -13,7 +13,6 @@ namespace Basic
 struct RenderDevice;
 
 struct Image;
-struct SpriteAnimation;
 struct TileSet;
 struct Texture;
 
