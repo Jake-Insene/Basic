@@ -31,7 +31,7 @@ Error Texture2D::load_from_path(Collections::StringView path)
 {
     if (!IO::File::exists(allocator, path))
     {
-        RMDebugInfo("Couldn't load the font '{}'", path);
+        RMDebugInfo("Couldn't load the texture '{}'", path);
         return MakeError(ErrorCode::FileNotFound);
     }
 
