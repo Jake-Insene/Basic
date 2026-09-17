@@ -15,8 +15,9 @@ static Vector2 _transform_around_point(const Transform2D& transform,
     return transformed + pivot;
 }
 
-SpriteBatch::SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device, GPU::TextureFormat render_attachment_format)
-: allocator(allocator), vertices(allocator, 4, {}), batches(allocator, 4, {}),
+SpriteBatch::SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device,
+    GPU::TextureViewID white_texture, GPU::TextureFormat render_attachment_format)
+: allocator(allocator), white_texture(white_texture), vertices(allocator, 4, {}), batches(allocator, 4, {}),
 current_texture_view(GPU::TextureViewID::invalid()), current_filter(SpriteFilter::MaxCount),
 state(RecordingState::End)
 {

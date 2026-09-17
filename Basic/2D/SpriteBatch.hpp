@@ -66,6 +66,7 @@ struct SpriteBatch
     };
     
     Mem::Allocator& allocator;
+    GPU::TextureViewID white_texture;
 
     GPU::DescriptorSetLayoutID set_layout;
 
@@ -82,8 +83,11 @@ struct SpriteBatch
 
     GPU::SamplerID samplers[u32(SpriteFilter::MaxCount)];
     
-    SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device, GPU::TextureFormat render_attachment_format);
+    SpriteBatch(Mem::Allocator& allocator, RenderDevice& render_device,
+        GPU::TextureViewID white_texture, GPU::TextureFormat render_attachment_format);
     ~SpriteBatch();
+
+    GPU::TextureViewID get_white_texture() { return white_texture; }
 
     void begin(Mat4 projection);
     void end();
