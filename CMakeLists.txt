@@ -37,6 +37,8 @@ bread_package(
         "Basic/Resource/Sound.cpp"
         "Basic/Resource/Texture.cpp"
 
+        "Basic/Scene/SceneManager.cpp"
+
         "Basic/Templates/GraphicsApplication.cpp"
 
         ${EXTERNAL_SRC}
